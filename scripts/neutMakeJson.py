@@ -53,11 +53,15 @@ def findMax(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim):
     pixel_reset = pixel_reset[asic_hits]
 
     print("found max hits:", asic_hits.sum())
-    print("found x pixels:", np.unique(pixel_x))
-    print("found y pixels:", np.unique(pixel_y))
+    print(f"found x {len(np.unique(pixel_x))} pixels {np.unique(pixel_x)}")
+    print(f"found y {len(np.unique(pixel_y))} pixels")
 
     assert len(pixel_x) == len(pixel_y), f"uneven pixel lengths: {len(pixel_x)} != {len(pixel_y)}"
     assert len(pixel_x) == len(pixel_reset), f"uneven data lengths: {len(pixel_x)} != {len(pixel_reset)}"
+
+    # re-order these pixels to 1
+    pixel_x = pixel_x - np.min(pixel_x) + 1
+    pixel_y = pixel_y - np.min(pixel_y) + 1
 
     return pixel_x, pixel_y, pixel_reset
 
@@ -76,17 +80,9 @@ def makeDF(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim):
 
     df = pd.DataFrame(pd_data)
     # count these as done in Simulation "Top Left" Asic is (0,0) : (row, col)
-    # create X
-    df['tileX'] = ((df['pX'] - 1) / xDIM).map(int)
+    # create X, Y asic associations
     df["AsicX"] = ((df["pX"] - 1) / channelXdim).map(int)
-
-    # create Y
-    df['tileY'] = ((df['pY'] - 1) / yDIM).map(int)
     df["AsicY"] = ((df["pY"] - 1) / channelYdim).map(int)
-
-    # create N, unique ASIC / Tile numbers to easily histogram
-    df['tileN'] = df['tileX'] + df['tileY'] * ceil(xMAX / xDIM)
-    df['AsicN'] = df['AsicX'] + df['AsicY'] * ceil(xMAX / channelXdim)
 
     # for each asic, it should only number a nPix within it's dimensions channelXdim *channelYdim
     # we chose X-dim as the "row" and Y-dim as the "column", to be consistent with the 
@@ -94,8 +90,7 @@ def makeDF(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim):
     npx = ((df["pX"]) - channelXdim*df["AsicX"] - 1).map(int)
     npy = ((df["pY"]) - channelYdim*df["AsicY"] - 1).map(int)
     df["nPix"] = npx + channelYdim*npy
-    df["PixN"] = df['pX'] + (df['pY'] ) * xMAX # include -1 since pY is one counted
-    
+
     return df
 
 def makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, outf):
@@ -113,8 +108,11 @@ def makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, outf):
     # normalize asic numbers: this is for the simulation input which "0 numbers" the asic's within it's rows / cols
     hitX = fdf["AsicX"].unique()
     hitY = fdf["AsicY"].unique()
-    minX = min(hitX)
-    minY = min(hitY)
+
+    pixX = fdf["pX"].unique()
+    pixY = fdf["pY"].unique()
+    minX = min(pixX)
+    minY = min(pixY)
 
     # build the hits tuple for each asic within the tile
     for x in hitX:
