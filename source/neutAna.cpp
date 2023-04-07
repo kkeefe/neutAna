@@ -26,8 +26,10 @@ int main(int argc, char** argv){
 
     // filtering here
     auto r = rdf.Define("tile_size", count_resets, {"pixel_reset", "pixel_x", "pixel_y"})
-                .Define("max_pixel_reset", max_pixel_resets, {"pixel_reset", "pixel_x", "pixel_y"})
-                .Define("asic_th2i", max_asic_resets, {"pixel_reset", "pixel_x", "pixel_y"});
+                .Define("all_pixel_reset", all_pixel_resets, {"pixel_reset", "pixel_x", "pixel_y"})
+                .Define("max_pixel_reset", max_pixel_resets, {"all_pixel_reset"})
+                .Define("asic_th2i", max_asic_resets, {"pixel_reset", "pixel_x", "pixel_y"})
+                .Define("max_pixel_rtd", max_pixel_rtds, {"pixel_reset", "pixel_x", "pixel_y"});
     auto f = r.Filter("tile_size > 0");
 
     int sum = f.Sum("tile_size").GetValue();
@@ -96,7 +98,9 @@ int main(int argc, char** argv){
     otf->Write();
     otf->Close();
 
-    std::cout << "Saving output RDF.\n";
+    // save an output and also save outputs that the python simulation can run
+    // f.Snapshot("event_tree", "./pdfs/saveRdf.root", {"asic_th2i"});
+    // std::cout << "Saving output event hists.\n";
 
     return 0;
 }

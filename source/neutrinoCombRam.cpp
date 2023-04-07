@@ -282,7 +282,7 @@ int main(int argc, char** argv){
         v_pixel_reset_ = neutEvt.pixel_reset;
 
         ntt->Fill();
-        if(++i%5000==0)std::cout << "filling hit: " << i - 1 << ", out of: " << cnt << std::endl;
+        if(++i%5000==0)std::cout << "filling hit: " << i << ", out of: " << cnt << std::endl;
     }
     ntf->Write();
     ntf->Close();

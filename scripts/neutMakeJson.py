@@ -107,11 +107,6 @@ def makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, outf):
     hitX = fdf["AsicX"].unique()
     hitY = fdf["AsicY"].unique()
 
-    pixX = fdf["pX"].unique()
-    pixY = fdf["pY"].unique()
-    minX = min(pixX)
-    minY = min(pixY)
-    
     # build the hits tuple for each asic within the tile
     nHits = 0
     for x in hitX:
