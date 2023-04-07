@@ -53,8 +53,6 @@ def findMax(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim):
     pixel_reset = pixel_reset[asic_hits]
 
     print("found max hits:", asic_hits.sum())
-    print(f"found x {len(np.unique(pixel_x))} pixels {np.unique(pixel_x)}")
-    print(f"found y {len(np.unique(pixel_y))} pixels")
 
     assert len(pixel_x) == len(pixel_y), f"uneven pixel lengths: {len(pixel_x)} != {len(pixel_y)}"
     assert len(pixel_x) == len(pixel_reset), f"uneven data lengths: {len(pixel_x)} != {len(pixel_reset)}"
@@ -113,15 +111,18 @@ def makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, outf):
     pixY = fdf["pY"].unique()
     minX = min(pixX)
     minY = min(pixY)
-
+    
     # build the hits tuple for each asic within the tile
+    nHits = 0
     for x in hitX:
         for y in hitY:
             asicResets = fdf[ (fdf["AsicX"] == x) & (fdf["AsicY"] == y) ][["Reset","nPix"]].values.tolist()
-            arrayX = x if minX == 0 else int(x%minX)
-            arrayY = y if minY == 0 else int(y%minY)
+            arrayX = int(x)
+            arrayY = int(y)
             tiledf["hits"].append([arrayX, arrayY, asicResets])
+            nHits += len(asicResets)
 
+    print(f"stored a total of {nHits} hits")
     # store the values within a json file
     import json
     with open(outf, "w") as outputFile:
