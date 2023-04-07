@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(QPixRTD LANGUAGES CUDA CXX)
+project(QPixRTD LANGUAGES CXX)
 
 ## find the ROOT package
 find_package(ROOT REQUIRED)
