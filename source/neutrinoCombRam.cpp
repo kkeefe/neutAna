@@ -60,24 +60,24 @@ int encode(const float_t& fsEnergy, const int& evt,
 }
 
 struct neutrinoEvent{
-    Int_t pdg = 0;
-    Float_t energy = 0;
-    Int_t event = 0;
-    Int_t isFHC = 0;
+    Int_t pdg = -42;
+    Float_t energy = -42;
+    Int_t event = -42;
+    Int_t isFHC = -42;
 
-    Int_t nEvent = 0;
-    Float_t fsEnergy = 0;
-    Int_t fsFileNo = 0;
-    Int_t nFS = 0;
-    Float_t lepKE = 0;
+    Int_t nEvent = -42;
+    Float_t fsEnergy = -42;
+    Int_t fsFileNo = -42;
+    Int_t nFS = -42;
+    Float_t lepKE = -42;
 
-    Float_t xpos  = 0; // vertex position
-    Float_t ypos  = 0;
-    Float_t zpos  = 0;
+    Float_t xpos  = -42; // vertex position
+    Float_t ypos  = -42;
+    Float_t zpos  = -42;
 
-    Float_t axis_x = 0; // rotation angle branches
-    Float_t axis_y = 0;
-    Float_t axis_z = 0;
+    Float_t axis_x = -42; // rotation angle branches
+    Float_t axis_y = -42;
+    Float_t axis_z = -42;
 
     std::vector<Int_t> pixel_x;
     std::vector<Int_t> pixel_y;
@@ -215,28 +215,28 @@ int main(int argc, char** argv){
     }
     tf->Close();
 
-    Int_t pdg_ = 0;
-    Float_t energy_ = 0;
-    Int_t event_ = 0;
+    Int_t pdg_ = -42;
+    Float_t energy_ = -42;
+    Int_t event_ = -42;
 
-    Int_t nEvent_ = 0;
-    Float_t fsEnergy_ = 0;
-    Int_t fsFileNo_ = 0;
-    Int_t nFS_ = 0;
-    Float_t lepKE_ = 0;
+    Int_t nEvent_ = -42;
+    Float_t fsEnergy_ = -42;
+    Int_t fsFileNo_ = -42;
+    Int_t nFS_ = -42;
+    Float_t lepKE_ = -42;
 
-    Float_t xpos_  = 0; // vertex position
-    Float_t ypos_  = 0;
-    Float_t zpos_  = 0;
+    Float_t xpos_  = -42; // vertex position
+    Float_t ypos_  = -42;
+    Float_t zpos_  = -42;
 
-    Float_t axis_x_ = 0; // rotation angle branches
-    Float_t axis_y_ = 0;
-    Float_t axis_z_ = 0;
+    Float_t axis_x_ = -42; // rotation angle branches
+    Float_t axis_y_ = -42;
+    Float_t axis_z_ = -42;
     // read through map, create new output file
     std::vector<Int_t> v_pixel_x_;
     std::vector<Int_t> v_pixel_y_;
     std::vector<Double_t> v_pixel_reset_;
-    std::string outputTree = "out.root";
+    std::string outputTree = "out_comb.root";
     TFile* ntf = new TFile(outputTree.c_str(), "RECREATE");
     TTree* ntt = new TTree("event_tree", "tt");
     ntt->Branch("axis_x", &axis_x_);
