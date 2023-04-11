@@ -1,3 +1,10 @@
 build
 .vscode
 *root
+*csv
+
+__pycache__
+.pytest_cache
+*pdf
+*png
+.ipynb_checkpoints
