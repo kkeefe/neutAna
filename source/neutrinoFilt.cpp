@@ -7,6 +7,8 @@
 #include <vector>
 #include <iostream>
 
+#include "neutAna.hpp"
+
 int main(int argc, char** argv){
 
     if(argc != 4){
@@ -44,7 +46,8 @@ int main(int argc, char** argv){
                                          "fsFileNo", "nFS", "pixel_x",
                                          "pixel_y", "pixel_reset"};
 
-    std::string tile_set = "pixel_x < 300 + 64 && pixel_x > 300 - 64 && pixel_y < 800 + 64 && pixel_y > 800 - 64";
+    std::string tile_set = "pixel_x < " + std::to_string(XMAX) + " && pixel_x >= "+ std::to_string(XMIN) + " && "
+                           "pixel_y < " + std::to_string(YMAX) + " && pixel_y >= "+ std::to_string(YMIN);
     ROOT::EnableImplicitMT();
     ROOT::RDataFrame rdf = ROOT::RDataFrame("event_tree", name.c_str(), colNames);
     auto fdf = rdf.Filter("pixel_reset < 1e-1").Filter(tile_set.c_str());

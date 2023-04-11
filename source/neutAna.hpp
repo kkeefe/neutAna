@@ -6,6 +6,12 @@
 
 #include <algorithm>
 
+#define TILE_WIDTH 64;
+const int YMIN = 800 - TILE_WIDTH;
+const int YMAX = 800 + TILE_WIDTH;
+const int XMIN = 300 - TILE_WIDTH;
+const int XMAX = 300 + TILE_WIDTH;
+
 // encoder for the pixel
 int encodePixel(const int& px, const int&py)
 {
@@ -46,6 +52,10 @@ std::vector<int> all_pixel_resets(const std::vector<double>& p_resets,
                                   const std::vector<int>& py)
 {
     std::map<int, int> pixel_counts;
+    for(int ix=XMIN; ix<XMAX; ix++) // count all of the zeros too
+        for(int iy=YMIN; iy<YMAX; iy++){
+            pixel_counts[encodePixel(ix, iy)] = 0;
+        }
 
     for(int i=0; i<p_resets.size(); ++i){
         int id = encodePixel(px[i], py[i]);
@@ -112,7 +122,7 @@ TH2I max_asic_resets(const std::vector<double>& p_resets,
                      const std::vector<int>& px,
                      const std::vector<int>& py)
 {
-    TH2I asicBins = TH2I("", "", 128/4, 300-64, 300+64, 128/4, 800-64, 800+64);
+    TH2I asicBins = TH2I("", "", 128/4, XMIN, XMAX, 128/4, YMIN, YMAX);
 
     // build the pixel hit map
     for(int i=0; i<p_resets.size(); ++i){
@@ -160,15 +170,15 @@ void makeGraphs(filtered_rdf& rdf, std::string& cut, TDirectory* td)
     TGraph tgPixel = *nf.Graph("tile_size", "max_pixel_reset");
     tgPixel.Sort();
     tgPixel.Draw();
-    tgPixel.SetName("tgAsic");
-    tgPixel.SetTitle("tgAsic");
+    tgPixel.SetName("tgMaxPixel");
+    tgPixel.SetTitle("tgMaxPixel");
     tgPixel.Write();
 
     TGraph tgAsic = *nf.Graph("tile_size", "max_asic_reset");
     tgAsic.Sort();
     tgAsic.Draw();
-    tgAsic.SetName("tgAsic");
-    tgAsic.SetTitle("tgAsic");
+    tgAsic.SetName("tgMaxAsic");
+    tgAsic.SetTitle("tgMaxAsic");
     tgAsic.Write();
 
     TGraph tgLepKEAsic = *nf.Graph("lepKE", "max_asic_reset");
@@ -178,12 +188,26 @@ void makeGraphs(filtered_rdf& rdf, std::string& cut, TDirectory* td)
     tgLepKEAsic.SetTitle("tgLepKEAsic");
     tgLepKEAsic.Write();
 
-    TGraph tgLepKETile = *nf.Graph("lepKE", "max_asic_reset");
+    TGraph tgLepKETile = *nf.Graph("lepKE", "hTile");
     tgLepKETile.Sort();
     tgLepKETile.Draw();
     tgLepKETile.SetName("tgLepKETile");
     tgLepKETile.SetTitle("tgLepKETile");
     tgLepKETile.Write();
+
+    TGraph tgnFSAsic = *nf.Graph("nFS", "max_asic_reset");
+    tgnFSAsic.Sort();
+    tgnFSAsic.Draw();
+    tgnFSAsic.SetName("tgnFSAsic");
+    tgnFSAsic.SetTitle("tgnFSAsic");
+    tgnFSAsic.Write();
+
+    TGraph tgnFSTile = *nf.Graph("nFS", "hTile");
+    tgnFSTile.Sort();
+    tgnFSTile.Draw();
+    tgnFSTile.SetName("tgnFSTile");
+    tgnFSTile.SetTitle("tgnFSTile");
+    tgnFSTile.Write();
 
     // make a TGraphErrors here
     // int n=0;

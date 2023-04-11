@@ -1,21 +1,9 @@
 ############################################################
-# Create the QPixRTD library
+# Create the neutAna
 ############################################################
 
-# file(GLOB SOURCES "*.cpp")
-
-# # generate ROOT dictionary
-# ROOT_GENERATE_DICTIONARY(QPixRTDDict ROOTFileManager.h LINKDEF LinkDef.h)
-
-##Generate the static library from the library sources
-add_executable(temp temp.cpp)
-target_link_libraries(temp ${ROOT_LIBRARIES})
-# enable_language(CUDA)
-# include(CheckLanguage)
-# check_language(CUDA)
-
-add_executable(filtNeutino neutrinoFilt.cpp)
-target_link_libraries(filtNeutino ${ROOT_LIBRARIES})
+add_executable(filtNeutrino neutrinoFilt.cpp)
+target_link_libraries(filtNeutrino ${ROOT_LIBRARIES})
 
 add_executable(combNeutrinoRam neutrinoCombRam.cpp)
 target_link_libraries(combNeutrinoRam ${ROOT_LIBRARIES})
