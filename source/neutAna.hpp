@@ -188,7 +188,7 @@ void makeGraphs(filtered_rdf& rdf, std::string& cut, TDirectory* td)
     tgLepKEAsic.SetTitle("tgLepKEAsic");
     tgLepKEAsic.Write();
 
-    TGraph tgLepKETile = *nf.Graph("lepKE", "hTile");
+    TGraph tgLepKETile = *nf.Graph("lepKE", "tile_size");
     tgLepKETile.Sort();
     tgLepKETile.Draw();
     tgLepKETile.SetName("tgLepKETile");
@@ -202,7 +202,7 @@ void makeGraphs(filtered_rdf& rdf, std::string& cut, TDirectory* td)
     tgnFSAsic.SetTitle("tgnFSAsic");
     tgnFSAsic.Write();
 
-    TGraph tgnFSTile = *nf.Graph("nFS", "hTile");
+    TGraph tgnFSTile = *nf.Graph("nFS", "tile_size");
     tgnFSTile.Sort();
     tgnFSTile.Draw();
     tgnFSTile.SetName("tgnFSTile");

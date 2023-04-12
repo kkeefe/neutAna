@@ -99,8 +99,8 @@ int main(int argc, char** argv){
     otf->Close();
 
     // save an output and also save outputs that the python simulation can run
-    // f.Snapshot("event_tree", "./pdfs/saveRdf.root", {"asic_th2i"});
-    // std::cout << "Saving output event hists.\n";
+    f.Snapshot("event_tree", "./saveRdf.root", {"pixel_reset", "pixel_x", "pixel_y","asic_th2i"});
+    std::cout << "Saving output event hists.\n";
 
     return 0;
 }

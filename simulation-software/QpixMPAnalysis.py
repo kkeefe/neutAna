@@ -18,10 +18,8 @@ INPUT_FILE = "../jsons/1k_rtd_data_200-210.json"
 INPUT_DATA_FILE = "../data_rtd/electron_nu_fhc_files.root"
 SEED = 420
 
-def getDF(input_file):
-    import codecs, json
-    obj_text = codecs.open(input_file, 'r').read()
-    return json.loads(obj_text)
+INT_PRD = 0.5
+NHARDINT = 10
 
 def makeData(tile, r):
     """
@@ -77,6 +75,13 @@ def makeData(tile, r):
 def GetOutputJsonFile(event_number, arrayXdim, arrayYdim):
     return f"../jsons/evt-{event_number}_x-{arrayXdim}_y-{arrayYdim}.json"
 
+def getDF(input_file):
+    import codecs, json
+    if isinstance(input_file, tuple):
+        input_file = GetOutputJsonFile(input_file[0], input_file[1], input_file[2])
+    obj_text = codecs.open(input_file, 'r').read()
+    return json.loads(obj_text)
+
 def MakeNeutFile(event_number, arrayXdim, arrayYdim):
     """
     Running the scripted import file
@@ -109,14 +114,18 @@ def pushTile(queue, r, neutFile, int_time=MAXTIME):
     readDF = getDF(INPUT_FILE)
     tile._InjectHits(readDF["hits"])
 
-    curT = 0
-    while curT < MAXTIME + 1:
-        curT += tile._deltaT
-        tile.Process(curT)
+    dT, nInt = 0, 0
+    while dT < int_time + INT_PRD:
+        dT += INT_PRD
+        if nInt % NHARDINT == 0:
+            tile.Interrogate(INT_PRD, hard=True)
+        else:
+            tile.Interrogate(INT_PRD, hard=False)
+        nInt += 1
 
     queue.put(makeData(tile, r))
 
-def runTile(queue, r, neutFile, int_time=MAXTIME):
+def pullTile(queue, r, neutFile, int_time=MAXTIME):
     """
     basic function to run a tile with an integration period, over a specified time
 
@@ -126,8 +135,6 @@ def runTile(queue, r, neutFile, int_time=MAXTIME):
     import numpy as np
     np.random.seed(SEED)
 
-    int_prd = 0.5
-    nHardInt = 10
 
     neutDF = getDF(neutFile)
     tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1)
@@ -146,12 +153,12 @@ def runTile(queue, r, neutFile, int_time=MAXTIME):
         tile.Route(r, transact=False)
 
     dT, nInt = 0, 0
-    while dT < int_time + int_prd:
-        dT += int_prd
-        if nInt % nHardInt == 0:
-            tile.Interrogate(int_prd, hard=True)
+    while dT < int_time + INT_PRD:
+        dT += INT_PRD
+        if nInt % NHARDINT == 0:
+            tile.Interrogate(INT_PRD, hard=True)
         else:
-            tile.Interrogate(int_prd, hard=False)
+            tile.Interrogate(INT_PRD, hard=False)
         nInt += 1
 
     queue.put(makeData(tile, r))
@@ -240,32 +247,39 @@ def main(seed=SEED):
     """
     This script should be called and run as an executable.
     """
-    ncpu = 20
+    ncpu = 60
 
     branches = makeBranches()
 
     # define the ranges of pull parameters to test
-    # routes = ["left", "snake", "trunk"]
-    routes = ["left", "snake"]
-    dims = [(4,4), (8,8)]
-    event_number = [i for i in range(1,6)]
-    neutFiles = [MakeNeutFile(evt, xd, yd) for evt in event_number for xd, yd in dims]
+    routes = ["left", "snake", "trunk"]
+    dims = [(4,4), (8,8), (10,14), (16,16)]
+    event_number = [i for i in range(1,5)]
+    neutFiles = [(evt, xd, yd) for evt in event_number for xd, yd in dims]
+
+    # make the files on the pool
+    pool = mp.Pool()
+    run = pool.starmap_async(MakeNeutFile, neutFiles)
+    run.wait()
 
     # place holder for the completed tiles
     tile_queue = mp.Queue()
 
     # create a list of all of the processes that need to run.
     pull_args = [(r, f) for r in routes for f in neutFiles]
-    push_args = [("snake", f) for f in neutFiles] # only test snake for push routing
+
+    # only test snake for push routing on 8x8 tiles
+    push_args = [("snake", f) for f in neutFiles if "x-8" in f] 
 
     # pull architecture procs
-    procs = [mp.Process(target=runTile, args=(tile_queue, *arg)) for arg in pull_args]
+    procs = [mp.Process(target=pullTile, args=(tile_queue, *arg)) for arg in pull_args]
 
     # push archiecture procs
-    # procs.extend([mp.Process(target=pushTile, args=(tile_queue, arg)) for arg in push_args])
+    procs.extend([mp.Process(target=pushTile, args=(tile_queue, *arg)) for arg in push_args])
 
     nProcs = len(procs)
-    print(f"begginning processing of {nProcs} tiles.")
+    msg = f"begginning processing of {nProcs} tiles."
+    print(msg)
 
     completeProcs = 0
     runningProcs, pTiles = [], []
@@ -292,7 +306,6 @@ def main(seed=SEED):
 
     # save output file
     df = pd.DataFrame(branches)
-    df.to_csv("neutMP.csv")
     df.to_feather("neutMP.feather", compression="zstd")
 
 if __name__ == "__main__":
