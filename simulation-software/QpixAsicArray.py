@@ -342,7 +342,8 @@ def AnalyzeArray(qparray, silent=False):
     for asic in qparray:
         data, end = AnalyzeASIC(qparray, asic.row, asic.col, silent=silent)
         if len(data) != asic.totalInjected:
-            print(f"Analyze: Asic data failure at ({asic.row},{asic.col})")
+            print(f"Analyze: Asic data failure at ({asic.row},{asic.col})", end=" ")
+            print(f"recv: {len(data)} expected {asic.totalInjected}")
             return False
     return True
 
@@ -580,7 +581,7 @@ class QpixAsicArray():
         elif byte.wordType == AsicWord.REGREQ:
             request = byte
         else:
-            raise QPExcpetion("Unknown word type being sent via command")
+            raise Excpetion("Unknown word type being sent via command")
         assert self._targNode is not None, "warning no targ node to send to"
         self._queue.AddQueueItem(self._targNode, self._targDir, request, self._timeNow, command=command)
 
@@ -807,6 +808,8 @@ class QpixAsicArray():
             offset - time, of when to set the earliest injected reset value to
         """
         # store the asic times into the correct asic
+        self.InjectedHits = []
+        self.totalTimes = 0
         for asicX, asicY, resets in dataframeHits:
 
             if asicX >= self._nrows or asicY >= self._ncols:
@@ -820,13 +823,9 @@ class QpixAsicArray():
 
             self._asics[asicX][asicY].InjectHits(times, channels)
 
-            # the total injected is equal to the final amount of times
-            # stored in the asic after injection.
-            # this allows the InjectHits method of the ASIC
-            # to combine 'near' times that would otherwise be recorded
-            # on the time timestamp/clock
-            self.totalInjectedHits += len(self._asics[asicX][asicY]._times)
+            self.InjectedHits.extend(self._asics[asicX][asicY]._times)
             self.totalTimes += len(times)
+        self.totalInjectedHits = len(self.InjectedHits)
 
 
 

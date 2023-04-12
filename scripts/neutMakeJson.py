@@ -26,7 +26,7 @@ def findMax(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim):
     max_x = np.max(pixel_x)
     max_y = np.max(pixel_y)
 
-    print(f"found asic hit range, x:{min_x}-{max_x} - y: {min_y}-{max_y}")
+    # print(f"found asic hit range, x:{min_x}-{max_x} - y: {min_y}-{max_y}")
 
     def getBestSlice(x, pix_x, y, pix_y):
         x_hits = np.logical_and(pix_x >= x, pix_x < x + xPixRange)
@@ -52,14 +52,15 @@ def findMax(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim):
     pixel_y = pixel_y[asic_hits]
     pixel_reset = pixel_reset[asic_hits]
 
-    print("found max hits:", asic_hits.sum())
+    # print("found max hits:", asic_hits.sum())
 
     assert len(pixel_x) == len(pixel_y), f"uneven pixel lengths: {len(pixel_x)} != {len(pixel_y)}"
     assert len(pixel_x) == len(pixel_reset), f"uneven data lengths: {len(pixel_x)} != {len(pixel_reset)}"
 
     # re-order these pixels to 1
-    pixel_x = pixel_x - np.min(pixel_x) + 1
-    pixel_y = pixel_y - np.min(pixel_y) + 1
+    if len(pixel_x) > 0:
+        pixel_x = pixel_x - np.min(pixel_x) + 1
+        pixel_y = pixel_y - np.min(pixel_y) + 1
 
     return pixel_x, pixel_y, pixel_reset
 
@@ -117,16 +118,20 @@ def makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, outf):
             tiledf["hits"].append([arrayX, arrayY, asicResets])
             nHits += len(asicResets)
 
+    tiledf["size"] = nHits
+
     print(f"stored a total of {nHits} hits")
     # store the values within a json file
     import json
     with open(outf, "w") as outputFile:
         json.dump(tiledf, outputFile, indent=4)
 
+    return nHits
+
 def setup_tree(input_file, event_number):
-    pix_x = ROOT.std.vector('int')()
-    pix_y = ROOT.std.vector('int')()
-    pix_r = ROOT.std.vector('double')()
+    pix_x = ROOT.std.vector('Int_t')()
+    pix_y = ROOT.std.vector('Int_t')()
+    pix_r = ROOT.std.vector('Double_t')()
 
     tf = ROOT.TFile(input_file, "READ")
     if tf.IsZombie():
@@ -150,7 +155,6 @@ def setup_tree(input_file, event_number):
 
     return pix_x, pix_y, pix_r
 
-
 def main(input_file, event_number, output_file, arrayXdim, arrayYdim):
     """
     ARGS:
@@ -165,7 +169,9 @@ def main(input_file, event_number, output_file, arrayXdim, arrayYdim):
     pixel_x, pixel_y, pixel_reset = setup_tree(input_file, event_number)
 
     # filter and create the flattened output json file to send to the python sim
-    makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, output_file)
+    hits = makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, output_file)
+
+    return hits
 
 if __name__ == "__main__":
     if len(sys.argv) != 6:

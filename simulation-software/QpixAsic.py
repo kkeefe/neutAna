@@ -778,7 +778,7 @@ class QPixAsic:
             self._channels = np.array(channels)
 
         self._times = np.array(times)
-        self.totalInjected += len(times)
+        self.totalInjected = len(times)
 
 
     def _ReadHits(self, targetTime):
