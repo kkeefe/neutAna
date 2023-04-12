@@ -1,8 +1,8 @@
-import ROOT
 import os
 import sys
 import numpy as np
 import pandas as pd
+import ROOT
 
 channelXdim = 4
 channelYdim = 4
@@ -14,6 +14,11 @@ def findMax(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim):
     find the range of pixels within Xdim and Ydim that give the most resets
     and create the
     """
+    if len(pixel_x) == 0:
+        pixel_x = [-1]
+        pixel_y = [-1]
+        pixel_reset = [-1]
+
     pixel_x = np.asarray(pixel_x)
     pixel_y = np.asarray(pixel_y)
     pixel_reset = np.asarray(pixel_reset)
@@ -53,7 +58,6 @@ def findMax(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim):
     pixel_reset = pixel_reset[asic_hits]
 
     # print("found max hits:", asic_hits.sum())
-
     assert len(pixel_x) == len(pixel_y), f"uneven pixel lengths: {len(pixel_x)} != {len(pixel_y)}"
     assert len(pixel_x) == len(pixel_reset), f"uneven data lengths: {len(pixel_x)} != {len(pixel_reset)}"
 
@@ -176,6 +180,14 @@ def main(input_file, event_number, output_file, arrayXdim, arrayYdim):
 if __name__ == "__main__":
     if len(sys.argv) != 6:
         print(f"need 6 args: received: {len(sys.argv)}")
+        msg = """
+        input_file = sys.argv[1]
+        event_number = int(sys.argv[2])
+        output_file = sys.argv[3]
+        arrayXdim = int(sys.argv[4])
+        arrayYdim = int(sys.argv[5])
+        """
+        print("give args:", msg)
     else:
         input_file = sys.argv[1]
         event_number = int(sys.argv[2])

@@ -105,6 +105,10 @@ def pushTile(queue, r, neutFile, int_time=MAXTIME):
     np.random.seed(SEED)
 
     neutDF = getDF(neutFile)
+    if neutDF["size"] == 0:
+        queue.put(makeData(tile, r))
+        return
+
     tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1)
 
     tile.Route(r, transact=False)
@@ -254,13 +258,14 @@ def main(seed=SEED):
     # define the ranges of pull parameters to test
     routes = ["left", "snake", "trunk"]
     dims = [(4,4), (8,8), (10,14), (16,16)]
-    event_number = [i for i in range(1,5)]
+    event_number = [i for i in range(1,5000)]
     neutFiles = [(evt, xd, yd) for evt in event_number for xd, yd in dims]
 
     # make the files on the pool
+    msg = f"creating {len(neutFiles)} neutrino json files. continue?"
+    input(msg)
     pool = mp.Pool()
-    run = pool.starmap_async(MakeNeutFile, neutFiles)
-    run.wait()
+    pool.starmap(MakeNeutFile, neutFiles)
 
     # place holder for the completed tiles
     tile_queue = mp.Queue()
@@ -279,7 +284,7 @@ def main(seed=SEED):
 
     nProcs = len(procs)
     msg = f"begginning processing of {nProcs} tiles."
-    print(msg)
+    input(msg)
 
     completeProcs = 0
     runningProcs, pTiles = [], []
