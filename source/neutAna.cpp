@@ -21,9 +21,9 @@ const std::string thCut3 = "axis_x == 10000 && axis_z == -349";
 const std::string thCut4 = "axis_x == 0 && axis_z == 1";
 const std::string thCut5 = "axis_x == 0 && axis_z == -1";
 
-void fillZposDir(TDirectory* otf, filtered_rdf& f, const std::string& cut){
+void fillZposDir(TDirectory* otf, cached_rdf& f, const std::string& cut){
     otf->cd();
-    auto t1 = f.Filter(cut);
+    auto t1 = f.Filter(cut).Cache();
     auto tdZ1 = otf->mkdir("zpos1");
     auto tdZ2 = otf->mkdir("zpos2");
     auto tdZ3 = otf->mkdir("zpos3");
@@ -36,9 +36,9 @@ void fillZposDir(TDirectory* otf, filtered_rdf& f, const std::string& cut){
     makeGraphs(t1, zpCut3500, tdZ5);
 }
 
-void fillThetaDir(TDirectory* otf, filtered_rdf& f, const std::string& cut){
+void fillThetaDir(TDirectory* otf, cached_rdf& f, const std::string& cut){
     otf->cd();
-    auto zp = f.Filter(cut);
+    auto zp = f.Filter(cut).Cache();
     auto tdTh1 = otf->mkdir("theta1");
     auto tdTh2 = otf->mkdir("theta2");
     auto tdTh3 = otf->mkdir("theta3");
@@ -53,13 +53,18 @@ void fillThetaDir(TDirectory* otf, filtered_rdf& f, const std::string& cut){
 
 int main(int argc, char** argv){
 
-    if(argc != 2){
+    std::string input_name;
+    std::string output_name;
+    if(argc == 3){
+        output_name = argv[1];
+        std::cout << "saving arg name: " << output_name << std::endl;
+    } else if(argc != 2){
         std::cout << "must provide only input file.\n";
         std::cout << "nArgs: " << argc << std::endl;
         return -1;
     }
 
-    std::string input_name = argv[1];
+    input_name = argv[1];
     TFile* tf = new TFile(input_name.c_str(), "READ");
     if(tf->IsZombie()){std::cout << "warning unable to open file!\n";return -1;};
     tf->Close();
@@ -74,7 +79,7 @@ int main(int argc, char** argv){
                 .Define("max_pixel_reset", max_pixel_resets, {"all_pixel_reset"})
                 .Define("asic_th2i", max_asic_resets, {"pixel_reset", "pixel_x", "pixel_y"})
                 .Define("max_pixel_rtd", max_pixel_rtds, {"pixel_reset", "pixel_x", "pixel_y"});
-    auto f = r.Filter("tile_size > 0");
+    auto f = r.Filter("tile_size > 0").Cache();
 
     int sum = f.Sum("tile_size").GetValue();
     double mean = f.Mean("tile_size").GetValue();
@@ -85,8 +90,7 @@ int main(int argc, char** argv){
     std::cout << "Found max pixel hits: " << Max << std::endl;
     std::cout << "Found min pixel hits: " << Min << std::endl;
 
-    TFile* otf = new TFile("./pdfs/graphs.root", "RECREATE");
-
+    TFile* otf = new TFile(output_name.c_str(), "RECREATE");
 
     try
     {
@@ -121,8 +125,8 @@ int main(int argc, char** argv){
     otf->Close();
 
     // save an output and also save outputs that the python simulation can run
-    f.Snapshot("event_tree", "./saveRdf.root", {"asic_th2i"});
-    std::cout << "Saving output event hists.\n";
+    // f.Snapshot("event_tree", "./saveRdf.root", {"asic_th2i"});
+    // std::cout << "Saving output event hists.\n";
 
     return 0;
 }
