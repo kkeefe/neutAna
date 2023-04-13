@@ -56,7 +56,7 @@ int main(int argc, char** argv){
     std::string input_name;
     std::string output_name;
     if(argc == 3){
-        output_name = argv[1];
+        output_name = argv[2];
         std::cout << "saving arg name: " << output_name << std::endl;
     } else if(argc != 2){
         std::cout << "must provide only input file.\n";
