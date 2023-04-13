@@ -133,12 +133,12 @@ TH2I max_asic_resets(const std::vector<double>& p_resets,
 }
 
 typedef ROOT::RDF::RInterface<ROOT::Detail::RDF::RJittedFilter,void> filtered_rdf;
-void makeGraphs(filtered_rdf& rdf, std::string& cut, TDirectory* td)
+void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
 {
     td->cd();
     auto f = rdf.Filter(cut);
 
-    auto thTile = f.Histo1D({"hTile", "hTile", 100, 0, 10000}, "tile_size");
+    auto thTile = f.Histo1D({"hTile", "hTile", 200, 0, 10000}, "tile_size");
     thTile->Draw();
     thTile->Write();
 

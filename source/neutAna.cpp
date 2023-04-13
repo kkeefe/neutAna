@@ -7,6 +7,50 @@
 #include "TCanvas.h"
 #include "TStyle.h"
 
+// z-pos, defined in Neutrino.sh in qpixg4 and in neutrinoCombRam
+const std::string zpCut100 = "zpos == 100";
+const std::string zpCut800 = "zpos == 800";
+const std::string zpCut1800 = "zpos == 1800";
+const std::string zpCut2800 = "zpos == 2800";
+const std::string zpCut3500 = "zpos == 3500";
+
+// theta, defined in Neutrino.sh in qpixg4 and in neutrinoCombRam
+const std::string thCut1 = "axis_x == 1 && axis_z == 0";
+const std::string thCut2 = "axis_x == 10000 && axis_z == 349";
+const std::string thCut3 = "axis_x == 10000 && axis_z == -349";
+const std::string thCut4 = "axis_x == 0 && axis_z == 1";
+const std::string thCut5 = "axis_x == 0 && axis_z == -1";
+
+void fillZposDir(TDirectory* otf, filtered_rdf& f, const std::string& cut){
+    otf->cd();
+    auto t1 = f.Filter(cut);
+    auto tdZ1 = otf->mkdir("zpos1");
+    auto tdZ2 = otf->mkdir("zpos2");
+    auto tdZ3 = otf->mkdir("zpos3");
+    auto tdZ4 = otf->mkdir("zpos4");
+    auto tdZ5 = otf->mkdir("zpos5");
+    makeGraphs(t1, zpCut100, tdZ1);
+    makeGraphs(t1, zpCut800, tdZ2);
+    makeGraphs(t1, zpCut1800, tdZ3);
+    makeGraphs(t1, zpCut2800, tdZ4);
+    makeGraphs(t1, zpCut3500, tdZ5);
+}
+
+void fillThetaDir(TDirectory* otf, filtered_rdf& f, const std::string& cut){
+    otf->cd();
+    auto zp = f.Filter(cut);
+    auto tdTh1 = otf->mkdir("theta1");
+    auto tdTh2 = otf->mkdir("theta2");
+    auto tdTh3 = otf->mkdir("theta3");
+    auto tdTh4 = otf->mkdir("theta4");
+    auto tdTh5 = otf->mkdir("theta5");
+    makeGraphs(zp, thCut1, tdTh1);
+    makeGraphs(zp, thCut2, tdTh2);
+    makeGraphs(zp, thCut3, tdTh3);
+    makeGraphs(zp, thCut4, tdTh4);
+    makeGraphs(zp, thCut5, tdTh5);
+}
+
 int main(int argc, char** argv){
 
     if(argc != 2){
@@ -43,63 +87,41 @@ int main(int argc, char** argv){
 
     TFile* otf = new TFile("./pdfs/graphs.root", "RECREATE");
 
-    // z-pos, defined in Neutrino.sh in qpixg4 and in neutrinoCombRam
-    std::string zpCut100 = "zpos == 100";
-    std::string zpCut800 = "zpos == 800";
-    std::string zpCut1800 = "zpos == 1800";
-    std::string zpCut2800 = "zpos == 2800";
-    std::string zpCut3500 = "zpos == 3500";
-
-    auto z1 = f.Filter(zpCut100);
-    auto z8 = f.Filter(zpCut800);
-    auto z18 = f.Filter(zpCut1800);
-    auto z28 = f.Filter(zpCut2800);
-    auto z38 = f.Filter(zpCut3500);
-
-    // theta, defined in Neutrino.sh in qpixg4 and in neutrinoCombRam
-    std::string thCut1 = "axis_x == 1 && axis_z == 0";
-    std::string thCut2 = "axis_x == 10000 && axis_z == 349";
-    std::string thCut3 = "axis_x == 10000 && axis_z == -349";
-    std::string thCut4 = "axis_x == 0 && axis_z == 1";
-    std::string thCut5 = "axis_x == 0 && axis_z == -1";
 
     try
     {
-        auto t1 = f.Filter(thCut1);
-        auto tdZ1 = otf->mkdir("zpos1");
-        auto tdZ2 = otf->mkdir("zpos2");
-        auto tdZ3 = otf->mkdir("zpos3");
-        auto tdZ4 = otf->mkdir("zpos4");
-        auto tdZ5 = otf->mkdir("zpos5");
-        makeGraphs(t1, zpCut100, tdZ1);
-        makeGraphs(t1, zpCut800, tdZ2);
-        makeGraphs(t1, zpCut1800, tdZ3);
-        makeGraphs(t1, zpCut2800, tdZ4);
-        makeGraphs(t1, zpCut3500, tdZ5);
+        TDirectory* theta1Dir = otf->mkdir("Theta1_const");
+        TDirectory* theta2Dir = otf->mkdir("Theta2_const");
+        TDirectory* theta3Dir = otf->mkdir("Theta3_const");
+        TDirectory* theta4Dir = otf->mkdir("Theta4_const");
+        TDirectory* theta5Dir = otf->mkdir("Theta5_const");
+        fillZposDir(theta1Dir, f, thCut1);
+        fillZposDir(theta2Dir, f, thCut2);
+        fillZposDir(theta3Dir, f, thCut3);
+        fillZposDir(theta4Dir, f, thCut4);
+        fillZposDir(theta5Dir, f, thCut5);
+
+        TDirectory* z1Dir = otf->mkdir("Zpos1_const");
+        TDirectory* z2Dir = otf->mkdir("Zpos8_const");
+        TDirectory* z3Dir = otf->mkdir("Zpos18_const");
+        TDirectory* z4Dir = otf->mkdir("Zpos28_const");
+        TDirectory* z5Dir = otf->mkdir("Zpos35_const");
+        fillThetaDir(z1Dir, f, zpCut100);
+        fillThetaDir(z2Dir, f, zpCut800);
+        fillThetaDir(z3Dir, f, zpCut1800);
+        fillThetaDir(z4Dir, f, zpCut2800);
+        fillThetaDir(z5Dir, f, zpCut3500);
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
     }
-    
-
-    // theta graphs
-    auto tdTh1 = otf->mkdir("theta1");
-    auto tdTh2 = otf->mkdir("theta2");
-    auto tdTh3 = otf->mkdir("theta3");
-    auto tdTh4 = otf->mkdir("theta4");
-    auto tdTh5 = otf->mkdir("theta5");
-    makeGraphs(z18, thCut1, tdTh1);
-    makeGraphs(z18, thCut2, tdTh2);
-    makeGraphs(z18, thCut3, tdTh3);
-    makeGraphs(z18, thCut4, tdTh4);
-    makeGraphs(z18, thCut5, tdTh5);
 
     otf->Write();
     otf->Close();
 
     // save an output and also save outputs that the python simulation can run
-    f.Snapshot("event_tree", "./saveRdf.root", {"pixel_reset", "pixel_x", "pixel_y","asic_th2i"});
+    f.Snapshot("event_tree", "./saveRdf.root", {"asic_th2i"});
     std::cout << "Saving output event hists.\n";
 
     return 0;
