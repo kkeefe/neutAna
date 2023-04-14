@@ -131,9 +131,9 @@ TH2I max_asic_resets(const std::vector<double>& p_resets,
 
     return asicBins;
 }
-typedef ROOT::RDF::RInterface<ROOT::Detail::RDF::RLoopManager> cached_rdf;
+// typedef ROOT::RDF::RInterface<ROOT::Detail::RDF::RLoopManager> cached_rdf;
 typedef ROOT::RDF::RInterface<ROOT::Detail::RDF::RJittedFilter,void> filtered_rdf;
-void makeGraphs(cached_rdf& rdf, const std::string& cut, TDirectory* td)
+void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
 {
     td->cd();
     auto f = rdf.Filter(cut);

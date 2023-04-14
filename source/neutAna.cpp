@@ -21,9 +21,9 @@ const std::string thCut3 = "axis_x == 10000 && axis_z == -349";
 const std::string thCut4 = "axis_x == 0 && axis_z == 1";
 const std::string thCut5 = "axis_x == 0 && axis_z == -1";
 
-void fillZposDir(TDirectory* otf, cached_rdf& f, const std::string& cut){
+void fillZposDir(TDirectory* otf, filtered_rdf& f, const std::string& cut){
     otf->cd();
-    auto t1 = f.Filter(cut).Cache();
+    auto t1 = f.Filter(cut);
     auto tdZ1 = otf->mkdir("zpos1");
     auto tdZ2 = otf->mkdir("zpos2");
     auto tdZ3 = otf->mkdir("zpos3");
@@ -36,9 +36,9 @@ void fillZposDir(TDirectory* otf, cached_rdf& f, const std::string& cut){
     makeGraphs(t1, zpCut3500, tdZ5);
 }
 
-void fillThetaDir(TDirectory* otf, cached_rdf& f, const std::string& cut){
+void fillThetaDir(TDirectory* otf, filtered_rdf& f, const std::string& cut){
     otf->cd();
-    auto zp = f.Filter(cut).Cache();
+    auto zp = f.Filter(cut);
     auto tdTh1 = otf->mkdir("theta1");
     auto tdTh2 = otf->mkdir("theta2");
     auto tdTh3 = otf->mkdir("theta3");
@@ -79,7 +79,7 @@ int main(int argc, char** argv){
                 .Define("max_pixel_reset", max_pixel_resets, {"all_pixel_reset"})
                 .Define("asic_th2i", max_asic_resets, {"pixel_reset", "pixel_x", "pixel_y"})
                 .Define("max_pixel_rtd", max_pixel_rtds, {"pixel_reset", "pixel_x", "pixel_y"});
-    auto f = r.Filter("tile_size > 0").Cache();
+    auto f = r.Filter("tile_size > 0");
 
     int sum = f.Sum("tile_size").GetValue();
     double mean = f.Mean("tile_size").GetValue();
