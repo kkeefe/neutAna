@@ -55,5 +55,34 @@ int main(int argc, char** argv){
     std::cout << "saving snapshot!\n";
     fdf.Snapshot("event_tree", outputTree.c_str());
 
+    // notes about how this performs comparatively on different timestamp cuts
+    // auto time_df = rdf.Filter("pixel_reset < 2e-2");
+    // auto tile_df = rdf.Filter(tile_set.c_str());
+    // auto both_df = tile_df.Filter("pixel_reset < 2e-2");
+    // float max = rdf.Count().GetValue() ;
+    // float time_cnt = time_df.Count().GetValue();
+    // float tile_cnt = tile_df.Count().GetValue();
+    // float both_cnt = both_df.Count().GetValue();
+    // std::cout << "filtering for none leaves: " << max << std::endl;
+    // std::cout << "filtering for time leaves: " <<  time_cnt << ", " << time_cnt / max  << std::endl;
+    // std::cout << "filtering for tile leaves: " <<  tile_cnt << ", " << tile_cnt / max  << std::endl;
+    // std::cout << "filtering for both leaves: " <<  both_cnt << ", " << both_cnt / max  << std::endl;
+    // 100 ms cut
+    // filtering for none leaves: 9.95972e+08
+    // filtering for time leaves: 5.26862e+08, 0.528993
+    // filtering for tile leaves: 3.03296e+08, 0.304522
+    // filtering for both leaves: 1.93029e+08, 0.193809
+    // 20 ms cut
+    // filtering for time leaves: 5.26859e+08, 0.528989
+    // filtering for tile leaves: 3.03296e+08, 0.304522 // same
+    // filtering for both leaves: 1.93027e+08, 0.193808
+    // 500 ms cut .003% more resets than 20ms cut
+    // filtering for time leaves: 5.26874e+08, 0.529004
+    // filtering for tile leaves: 3.03296e+08, 0.304522
+    // filtering for both leaves: 1.93033e+08, 0.193814
+    // std::string outputTree = "out.root";
+    // std::cout << "saving snapshot!\n";
+    // fdf.Snapshot("event_tree", outputTree.c_str());
+
     return 0;
 }
