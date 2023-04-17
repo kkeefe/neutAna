@@ -22,6 +22,7 @@ theta_titles = {tp: "#theta_{z}: " + str(value) for tp, value in zip(theta_dirs,
 
 # digital globals
 DIG_OUTPUT_FILE = "digAnaGraphs.root"
+routeColors = {"None":'red', 'trunk':'green', 'snake':'blue', 'left':'orange'}
 
 
 class canvas_counter:
@@ -207,7 +208,6 @@ def make_average_tmg(graphs, output_name, x_bins=None):
         std_data = np.array([np.std(d) for d in data], dtype=np.double)
 
         new_graph = ROOT.TGraphErrors(len(unique_ind), unique_ind, mean_data, ex, std_data)
-        # new_graph = ROOT.TGraphErrors(len(unique_ind), unique_ind[0], data[0], ex[0], std_data[0])
         new_graph.SetLineColor(graph.GetLineColor())
         new_graph.SetTitle(graph.GetTitle())
         newGraphs.append(new_graph)
@@ -256,34 +256,75 @@ def readRootDataFile(infile):
 
 
     # control for theta graphs
-    makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "hAsic",  "asic_cZpos", "Asic Resets", "Counts")
+    makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "hTile",  "tile_cZpos", "Tile Resets", "Counts")
+    makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "hAsic",  "asic_cZpos", "ASIC Resets", "Counts")
     makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "hPixel", "pixel_cZpos",  "Pixel Resets", "Counts")
     makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "tgLepKEAsic", "LepKE_AsicResets_cZpos",  "LepKE", "Max ASIC Resets")
+    makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "tgLepKETile", "LepKE_TileResets_cZpos",  "LepKE", "Max Tile Resets")
 
     # control for zpos graphs
-    makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "hAsic",  "asic_cTheta", "Asic Resets", "Counts")
+    makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "hTile",  "tile_cTheta", "Tile Resets", "Counts")
+    makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "hAsic",  "asic_cTheta", "ASIC Resets", "Counts")
     makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "hPixel", "pixel_cTheta",  "Pixel Resets", "Counts")
     makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "tgLepKEAsic", "LepKE_AsicResets_cTheta",  "LepKE", "Max ASIC Resets")
+    makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "tgLepKETile", "LepKE_TileResets_cTheta",  "LepKE", "Max Tile Resets")
 
     tf.Close()
 
 
 def readFeatherDataFile():
-    df = pd.read_feather("neutMP.feather")
+    df = pd.read_feather("./scripts/neutMP.feather")
 
     df['size'] = df['AsicX'].map(len)
     df = df[df['size'] == 64]
 
-    print(df)
-    # print(df.columns, df.size)
+    architectures = pd.unique(df["Architecture"])
+    routes = pd.unique(df['Route'])
 
     df["Remote Transaction Average"] = df['Remote Transactions'].map(np.mean)
 
     fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
-    df.hist('Max Local', bins=30, ax=ax[0][0])
-    df.hist('Max Remote', bins=30, ax=ax[1][0])
-    df.plot.scatter(x='Max Local', y='Max Remote', ax=ax[0][1])
-    df.hist('Remote Transaction Average', bins=30)
+    max_local_stack, max_remote_stack, stack_data = [], [], []
+    for route in routes:
+        if route == "None":
+            continue
+        route_df = df[df["Route"] == route]
+
+        ax[0][1].scatter(x=route_df["Max Local"], y=route_df["Max Remote"], c=routeColors[route], label=route)
+
+        # scatter plot fits
+        b, a = np.polyfit(route_df["Max Local"], route_df["Max Remote"], deg=1)
+        x = np.linspace(1, ax[0][1].get_xlim(), num=50)
+        ax[0][1].plot(x, b*x+a, c=routeColors[route])
+
+        # add data to stacks
+        stack_data.append(route_df["Remote Transaction Average"])
+        max_local_stack.append(route_df["Max Local"])
+        max_remote_stack.append(route_df["Max Remote"])
+
+    ax[0][0].hist(max_local_stack, bins=100,  histtype='step', stacked=False, fill=False, range=(0, 2000), density=False, cumulative=True, label=routes[1:])
+    max_remote_stack.append(max_local_stack[0])
+    max_labels = [*routes[1:], "local"]
+    ax[1][0].hist(max_remote_stack, bins=100, histtype='step', stacked=False, fill=False, range=(0, 2000), density=False, cumulative=True, label=max_labels)
+
+    ax[1][1].hist(stack_data, bins=200, range=(1, 3001), histtype='bar', stacked=True, log=False, label=routes[1:])
+    ax[1][1].set_ylabel("10 events / remote trans avg.")
+    ax[1][1].set_xlabel("Remote Transaction Average")
+
+    ax[0][0].legend(loc="lower right")
+    ax[0][0].set_xlabel("Local Buffer Depth")
+    ax[0][0].set_ylabel("CDF of entries")
+
+    ax[0][1].legend(loc="lower right", numpoints=1)
+    ax[0][1].set_xlabel("Max Local Buffer Depth")
+    ax[0][1].set_ylabel("Max Remote Buffer Depth")
+
+    ax[1][0].legend(loc="lower right")
+    ax[1][0].set_xlabel("Max Remote Buffer Depth")
+    ax[1][0].set_ylabel("Cumulative Events")
+
+    ax[1][1].legend()
+
 
     fig.savefig("df_histos.png")
 
@@ -292,9 +333,9 @@ def main(infile):
 
     print("running main")
 
-    readRootDataFile(infile=infile)
+    # readRootDataFile(infile=infile)
 
-    # readFeatherDataFile()
+    readFeatherDataFile()
 
 
 if __name__ == "__main__":
