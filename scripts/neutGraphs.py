@@ -1,11 +1,13 @@
-import ROOT
 import sys
+import ROOT
+ROOT.gROOT.SetBatch(True)
 import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
+# neutrino globals
 OUTPUT_FILE = "anaGraphs.root"
 theta_dirs = [f"Theta{i}_const" for i in range(1, 6)]
 zpos_dirs = [f"zpos{i}" for i in range(1, 6)]
@@ -15,49 +17,62 @@ theta_values = [0, 2, -2, 90, -90]
 zpos_colors = {zp: color for zp, color in zip(zpos_dirs, root_colors)}
 zpos_titles = {zp: "Z-Vertex: " + str(value) for zp, value in zip(zpos_dirs, zpos_values)}
 theta_colors = {tp: color for tp, color in zip(theta_dirs, root_colors)}
-theta_titles = {tp: "\\theta_{z}: " + str(value) for tp, value in zip(theta_dirs, theta_values)}
+theta_titles = {tp: "#theta_{z}: " + str(value) for tp, value in zip(theta_dirs, theta_values)}
 
-output_file = "tmp.root"
+
+# digital globals
+DIG_OUTPUT_FILE = "digAnaGraphs.root"
 
 
 class canvas_counter:
-    cnt = 0
-    self._canvases = []
-    self._tf = ROOT.TFile(output_file, "RECREATE")
+    """
+    Manage creation of output graphs for neutAna into output_file
+    """
+    def __init__(self):
+        self.cnt = 0
+        self._obj = []
+        self._tf = ROOT.TFile(OUTPUT_FILE, "RECREATE")
+        self._canvas = ROOT.TCanvas(f"c", f"c", 1000, 1000)
 
-    def Add(self, canvas):
+    def Add(self, obj, x_axis_title=None, y_axis_title=None, legend_pos=None):
+        """
+        Add an object to the canvas, do some things with it, and save it to the
+        output file
+        """
         self.cnt += 1
         self._tf.cd()
-        canvas.Write()
-        self._canvases.append(canvas)
+        self._obj.append(obj)
+        self._obj[-1].Draw()
 
+        if legend_pos is not None and legend_pos == "tr":
+            ROOT.gPad.BuildLegend(0.75, 0.75, 0.95, 0.95, "")
+        elif legend_pos is not None and legend_pos == "br":
+            ROOT.gPad.BuildLegend(0.75, 0.15, 0.95, 0.35, "")
+
+        if x_axis_title is not None:
+            self._obj[-1].GetXaxis().SetTitle(x_axis_title)
+        if y_axis_title is not None:
+            self._obj[-1].GetYaxis().SetTitle(y_axis_title)
+
+        self._canvas.SetName(self._obj[-1].GetName())
+        self._canvas.Draw()
+        self._canvas.Write()
+        self._canvas = ROOT.TCanvas(f"c", f"c", 1000, 1000)
 
 
 root_canvas = canvas_counter()
 
 
-def make_multi_graph(graph_list):
-    """
-    receive a list of graphs, stack them into a TMultigraph
-    """
-    tgMulti = ROOT.TMultiGraph()
-    for graph in graph_list:
-        tgMulti.Add(graph, "cp")
-    return tgMulti
-
-
-def draw_stack_hist(hist_list, x_axis_title=None, y_axis_title=None):
+def make_stack_hist(hist_list, output_name, x_axis_title=None, y_axis_title=None):
     """
     receive a list of histograms, stack them into a TStack
     """
-    thStack = ROOT.THStack("hs", "")
+    name = f"stack_{output_name}"
+
+    thStack = ROOT.THStack(f"{name}", f"{name}")
     for hist in hist_list:
         thStack.Add(hist)
-    thStack.Draw()
-    if x_axis_title is not None:
-        thStack.GetXaxis().SetTitle(x_axis_title)
-    if y_axis_title is not None:
-        thStack.GetYaxis().SetTitle(y_axis_title)
+
     return thStack
 
 
@@ -95,20 +110,18 @@ def get_graphs(data_dict, theta_key, z_key, name):
 
 
 def makeMultiGraph(graphs, output_name, x_axis_title, y_axis_title):
+    name = f"multigraph_{output_name}"
+
     tmg = ROOT.TMultiGraph()
+    tmg.SetName(f"{name}")
+
     for gr in graphs:
         tmg.Add(gr, "cp")
-    root_canvas.cnt += 1
-    canvas = ROOT.TCanvas(f"c{root_canvas.cnt}", f"c{root_canvas.cnt}", 1000, 1000)
-    tmg.Draw("apl")
-    tmg.GetXaxis().SetTitle(x_axis_title)
-    tmg.GetYaxis().SetTitle(y_axis_title)
-    # ROOT.gPad.BuildLegend(0.65, 0.25, 0.9, 0.50, "")
-    canvas.SaveAs(output_name)
-    canvas.Close()
+
+    return tmg
 
 
-def integrate_hists(hists, output_name, x_axis_title="Maximum ASIC Buffer Depth",
+def make_integral_hist(hists, output_name, x_axis_title="Maximum ASIC Buffer Depth",
                     y_axis_title="Percent of Events Fully Captured"):
     """
     create a running integral from a list of histograms passed here
@@ -131,25 +144,25 @@ def integrate_hists(hists, output_name, x_axis_title="Maximum ASIC Buffer Depth"
         tg.SetTitle(asic.GetTitle())
         graphs.append(tg)
 
-    makeMultiGraph(graphs, output_name, x_axis_title=x_axis_title, y_axis_title=y_axis_title)
+    return makeMultiGraph(graphs, output_name, x_axis_title, y_axis_title)
 
 
-def makeGraphs(tf_dict, tdirs, zdirs, graph_name="hAsic", hist_file="test_hASic_zpos.png",
-               integral_file="test_tmg_zpos.png", x_axis_title=None, y_axis_title=None):
+def makeGraphs(tf_dict, tdirs, zdirs, graph_name, output_name, x_axis_title=None, y_axis_title=None):
 
     asic_ints = get_graphs(tf_dict, tdirs, zdirs, graph_name)
-    root_canvas.Add(ROOT.TCanvas(f"c{root_canvas.cnt}", f"c{root_canvas.cnt}", 1000, 1000))
-    draw_stack_hist(asic_ints, x_axis_title, y_axis_title)
-    # ROOT.gPad.BuildLegend(0.75, 0.75, 0.95, 0.95, "")
-    canvas.SaveAs(hist_file)
-    canvas.Close()
-    integrate_hists(asic_ints, integral_file)
+
+    tmg = make_integral_hist(asic_ints, output_name)
+    root_canvas.Add(tmg, x_axis_title, y_axis_title, legend_pos="br")
+
+    stack = make_stack_hist(asic_ints, output_name, x_axis_title, y_axis_title)
+    root_canvas.Add(stack, x_axis_title, y_axis_title, legend_pos="tr")
 
 
 def readRootDataFile(infile):
     """
     how to parse the output data graph of neutAna.cpp
     """
+
     tf = ROOT.TFile(infile, "read")
     if tf.IsZombie():
         print("unable to find root file")
@@ -159,43 +172,13 @@ def readRootDataFile(infile):
         theta_dir: {zdir: {f.GetName(): f.ReadObj() for f in getattr(getattr(tf, theta_dir), zdir).GetListOfKeys()} for
                     zdir in zpos_dirs} for theta_dir in theta_dirs}
 
-    outf = ROOT.TFile(output_file, "RECREATE")
 
-    asic_ints = get_graphs(tf_dict, theta_dirs[0], zpos_dirs, "hAsic")
-    root_canvas.cnt += 1
-    integrate_hists(asic_ints, "test_tmg_zpos.png")
-    canvas = ROOT.TCanvas(f"c{root_canvas.cnt}", f"c{root_canvas.cnt}", 1000, 1000)
-    asic_stack = draw_stack_hist(asic_ints, "Asic Resets")
-    ROOT.gPad.BuildLegend(0.75, 0.75, 0.95, 0.95, "")
-    canvas.SaveAs("test_hASic_zpos.png")
-    canvas.Close()
+    makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "hAsic",  "asic_cZpos", "Asic Resets", "Counts")
+    makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "hAsic",  "asic_cTheta", "Asic Resets", "Counts")
+    makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "hPixel", "pixel_cZpos",  "Pixel Resets", "Counts")
+    makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "hPixel", "pixel_cTheta",  "Pixel Resets", "Counts")
 
-    pixel_ints = get_graphs(tf_dict, theta_dirs[0], zpos_dirs, "hPixel")
-    root_canvas.cnt += 1
-    integrate_hists(pixel_ints, "test_tmg_zpos_pixel.png", x_axis_title="Maximum Pixel Resets")
-    pix_canvas = ROOT.TCanvas(f"c{root_canvas.cnt}", f"c{root_canvas.cnt}", 1000, 1000)
-    pixel_stack = draw_stack_hist(pixel_ints, "Asic Resets")
-    ROOT.gPad.BuildLegend(0.75, 0.75, 0.95, 0.95, "")
-    pix_canvas.SaveAs("test_hPixel_zpos.png")
-    pix_canvas.Close()
-
-    # asic_ints = get_graphs(tf_dict, theta_dirs, zpos_dirs[0], "hPixel")
-    # root_canvas.cnt += 1
-    # canvas = ROOT.TCanvas(f"c{root_canvas.cnt}", f"c{root_canvas.cnt}", 1000, 1000)
-    # stack = draw_stack_hist(asic_ints, "Asic Resets")
-    # ROOT.gPad.BuildLegend(0.75, 0.75, 0.95, 0.95, "")
-    # canvas.SaveAs("test_hPixel_theta.png")
-    # canvas.Close()
-    # integrate_hists(asic_ints, "test_tmg_theta_pixel.png", x_axis_title="Maximum Pixel Resets")
-
-    # asic_theta = get_graphs(tf_dict, theta_dirs, zpos_dirs[0], "hAsic")
-    # root_canvas.cnt += 1
-    # newcanv = ROOT.TCanvas(f"c{root_canvas.cnt}", f"c{root_canvas.cnt}", 1000, 1000)
-    # newcanv.cd()
-    # tstack = draw_stack_hist(asic_theta, "Asic Resets")
-    # ROOT.gPad.BuildLegend(0.75, 0.75, 0.95, 0.95, "")
-    # newcanv.SaveAs("test_hASic_theta.png")
-    # integrate_hists(asic_theta, "test_tmg_theta.png")
+    tf.Close()
 
 
 def readFeatherDataFile():
@@ -232,7 +215,8 @@ if __name__ == "__main__":
         print("need input file arg to read")
         sys.exit(-1)
 
-    input_file = sys.argv[1]
+
+    input_file = sys.argv [1]
     if not os.path.isfile(input_file):
         print("could not find file at:", input_file)
         sys.exit(-1)
