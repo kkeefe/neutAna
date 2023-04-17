@@ -104,6 +104,13 @@ def get_graphs(data_dict, theta_key, z_key, name):
                 else:
                     data.SetFillColor(theta_colors[tk])
                     data.SetTitle(theta_titles[tk])
+            elif isinstance(data, ROOT.TGraph):
+                if vary_z:
+                    data.SetLineColor(zpos_colors[zk])
+                    data.SetTitle(zpos_titles[zk])
+                else:
+                    data.SetLineColor(theta_colors[tk])
+                    data.SetTitle(theta_titles[tk])
             graphs.append(data)
 
     return graphs
@@ -147,15 +154,90 @@ def make_integral_hist(hists, output_name, x_axis_title="Maximum ASIC Buffer Dep
     return makeMultiGraph(graphs, output_name, x_axis_title, y_axis_title)
 
 
+def make_average_tmg(graphs, output_name, x_bins=None):
+    """
+    each graph represents an ASIC in this cut with the corresponding x, y value
+
+    Create a TMultigraph of TGraphErrors for each graph
+    """
+
+    # we need to extract the x-axis and y-axis points for all graphs
+    nGraphs = len(graphs)
+    assert nGraphs > 0, "did not receive any graphs at make_average_tmg"
+
+    newGraphs = []
+    for graph in graphs:
+        nPoints = graph.GetN()
+        xpoints = graph.GetX()
+        ydata = graph.GetY()
+
+        # raw points
+        graph_ind = np.array([graph.GetPointX(i) for i in range(nPoints)], dtype=np.double)
+        if x_bins is not None:
+            ind = []
+            for i, gi in enumerate(graph_ind):
+                for j, xi in enumerate(x_bins):
+                    if xi > gi:
+                        ind.append(x_bins[j-1])
+                        break
+                    elif i == len(graph_ind) - 1 or j == len(x_bins) - 1:
+                        ind.append(x_bins[-1])
+                        break
+            graph_ind = ind
+
+        unique_ind = np.array(np.unique(graph_ind), dtype=np.double)
+        unique_ind_id = 0
+        cur_unique_ind = unique_ind[unique_ind_id]
+
+        # build the means and unique index
+        data = [[]]
+        for i in range(nPoints):
+            if graph_ind[i] == cur_unique_ind:
+                data[-1].append(graph.GetPointY(i))
+            else:
+                unique_ind_id += 1
+                cur_unique_ind = unique_ind[unique_ind_id]
+                data.append([])
+                data[-1].append(graph.GetPointY(i)) 
+
+        mean_data = np.array([np.mean(d) for d in data], dtype=np.double)
+
+        # errors
+        ex = np.array([0]*len(unique_ind), dtype=np.double)
+        std_data = np.array([np.std(d) for d in data], dtype=np.double)
+
+        new_graph = ROOT.TGraphErrors(len(unique_ind), unique_ind, mean_data, ex, std_data)
+        # new_graph = ROOT.TGraphErrors(len(unique_ind), unique_ind[0], data[0], ex[0], std_data[0])
+        new_graph.SetLineColor(graph.GetLineColor())
+        new_graph.SetTitle(graph.GetTitle())
+        newGraphs.append(new_graph)
+
+    tmg = makeMultiGraph(newGraphs, output_name, graphs[0].GetXaxis().GetTitle(), graphs[0].GetYaxis().GetTitle())
+
+    return tmg
+
+
+
 def makeGraphs(tf_dict, tdirs, zdirs, graph_name, output_name, x_axis_title=None, y_axis_title=None):
 
     asic_ints = get_graphs(tf_dict, tdirs, zdirs, graph_name)
+    if len(asic_ints) == 0:
+        print(f"found no graphs of {graph_name}")
+        return 
 
-    tmg = make_integral_hist(asic_ints, output_name)
-    root_canvas.Add(tmg, x_axis_title, y_axis_title, legend_pos="br")
+    # manage THistograms
+    if isinstance(asic_ints[0], ROOT.TH1):
+        tmg = make_integral_hist(asic_ints, output_name)
+        root_canvas.Add(tmg, x_axis_title, y_axis_title, legend_pos="br")
 
-    stack = make_stack_hist(asic_ints, output_name, x_axis_title, y_axis_title)
-    root_canvas.Add(stack, x_axis_title, y_axis_title, legend_pos="tr")
+        stack = make_stack_hist(asic_ints, output_name, x_axis_title, y_axis_title)
+        root_canvas.Add(stack, x_axis_title, y_axis_title, legend_pos="tr")
+
+    # manage TGraphs
+    if isinstance(asic_ints[0], ROOT.TGraph):
+        lepKEbins = list(range(250,10000,250))
+        tmg = make_average_tmg(asic_ints, output_name, x_bins=lepKEbins)
+        root_canvas.Add(tmg, x_axis_title, y_axis_title, legend_pos="tr")
 
 
 def readRootDataFile(infile):
@@ -173,10 +255,15 @@ def readRootDataFile(infile):
                     zdir in zpos_dirs} for theta_dir in theta_dirs}
 
 
+    # control for theta graphs
     makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "hAsic",  "asic_cZpos", "Asic Resets", "Counts")
-    makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "hAsic",  "asic_cTheta", "Asic Resets", "Counts")
     makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "hPixel", "pixel_cZpos",  "Pixel Resets", "Counts")
+    makeGraphs(tf_dict, theta_dirs[0], zpos_dirs, "tgLepKEAsic", "LepKE_AsicResets_cZpos",  "LepKE", "Max ASIC Resets")
+
+    # control for zpos graphs
+    makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "hAsic",  "asic_cTheta", "Asic Resets", "Counts")
     makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "hPixel", "pixel_cTheta",  "Pixel Resets", "Counts")
+    makeGraphs(tf_dict, theta_dirs, zpos_dirs[0], "tgLepKEAsic", "LepKE_AsicResets_cTheta",  "LepKE", "Max ASIC Resets")
 
     tf.Close()
 
