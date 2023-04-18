@@ -3,6 +3,7 @@ import multiprocessing as mp
 import numpy as np
 import QpixAsicArray as qparray
 import pandas as pd
+from datetime import datetime
 
 # make sure we can find the script path
 import sys
@@ -105,18 +106,24 @@ def pushTile(queue, r, neutFile, int_time=MAXTIME):
     np.random.seed(SEED)
 
     neutDF = getDF(neutFile)
+    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1)
     if neutDF["size"] == 0:
         queue.put(makeData(tile, r))
         return
 
-    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1)
-
+    tile.SetSendRemote(enabled=True, transact=False)
     tile.Route(r, transact=False)
     tile.SetPushState(enabled=True, transact=False)
 
     # inject the radiogenic reference data
     readDF = getDF(INPUT_FILE)
     tile._InjectHits(readDF["hits"])
+
+    # don't try to simulate egregiously large events
+    if tile.totalInjectedHits > 800 * int(tile._ncols * tile._nrows):
+        print(f"skipping large sim event size: {tile.totalInjectedHits}")
+        queue.put(makeData(tile, r))
+        return
 
     dT, nInt = 0, 0
     while dT < int_time + INT_PRD:
@@ -139,15 +146,21 @@ def pullTile(queue, r, neutFile, int_time=MAXTIME):
     import numpy as np
     np.random.seed(SEED)
 
-
     neutDF = getDF(neutFile)
     tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1)
+    if neutDF["size"] == 0:
+        queue.put(makeData(tile, r))
+        return
 
     # inject the radiogenic reference data
     readDF = getDF(INPUT_FILE)
     tile._InjectHits(readDF["hits"])
 
-    print(f", total injected: {tile.totalInjectedHits}")
+    # don't try to simulate egregiously large events
+    if tile.totalInjectedHits > 800 * int(tile._ncols * tile._nrows):
+        print(f"skipping large sim event size: {tile.totalInjectedHits}")
+        queue.put(makeData(tile, r))
+        return
 
     # configure other meta cases of the tile
     tile.SetSendRemote(enabled=True, transact=False)
@@ -252,7 +265,6 @@ def main(seed=SEED):
     This script should be called and run as an executable.
     """
     ncpu = 60
-
     branches = makeBranches()
 
     # define the ranges of pull parameters to test
@@ -263,7 +275,7 @@ def main(seed=SEED):
 
     # make the files on the pool
     msg = f"creating {len(neutFiles)} neutrino json files. continue?"
-    input(msg)
+    print(msg)
     pool = mp.Pool()
     pool.starmap(MakeNeutFile, neutFiles)
 
@@ -274,7 +286,7 @@ def main(seed=SEED):
     pull_args = [(r, f) for r in routes for f in neutFiles]
 
     # only test snake for push routing on 8x8 tiles
-    push_args = [("snake", f) for f in neutFiles if "x-8" in f] 
+    push_args = [("snake", f) for f in neutFiles if "x-4" in f] 
 
     # pull architecture procs
     procs = [mp.Process(target=pullTile, args=(tile_queue, *arg)) for arg in pull_args]
@@ -284,34 +296,39 @@ def main(seed=SEED):
 
     nProcs = len(procs)
     msg = f"begginning processing of {nProcs} tiles."
-    input(msg)
+    print(msg)
 
-    completeProcs = 0
-    runningProcs, pTiles = [], []
-    while completeProcs < nProcs:
+    try:
+        completeProcs = 0
+        runningProcs, pTiles = [], []
+        while completeProcs < nProcs:
 
-        # fill running procs until we use all cpu cores
-        while len(runningProcs) <= ncpu and len(procs) > 0:
-            runningProcs.append(procs.pop())
+            # fill running procs until we use all cpu cores
+            while len(runningProcs) <= ncpu and len(procs) > 0:
+                runningProcs.append(procs.pop())
 
-        # ensure the running procs have started
-        for ip, p in enumerate(runningProcs):
-            if p.pid is None:
-                p.start()
-            elif p.exitcode is not None:
-                runningProcs.pop(ip)
+            # ensure the running procs have started
+            for ip, p in enumerate(runningProcs):
+                if p.pid is None:
+                    p.start()
+                elif p.exitcode is not None:
+                    runningProcs.pop(ip)
 
-        # wait to get anything on the queue
-        pTiles.append(tile_queue.get())
-        for data in pTiles:
-            completeProcs += 1
-            fillData(data, branches)
-        pTiles = []
-        print(f"Completed tile {completeProcs}, {completeProcs/nProcs*100:0.2f}%..")
+            # wait to get anything on the queue
+            pTiles.append(tile_queue.get())
+            for data in pTiles:
+                completeProcs += 1
+                fillData(data, branches)
+            pTiles = []
+            print(f"Completed tile {completeProcs}/{nProcs}: {completeProcs/nProcs*100:0.2f}% @ {datetime.now()}..")
+    except Exception as ex:
+        print("encountered exception in creating output mp data:", ex)
+        print("attemping save..")
 
-    # save output file
-    df = pd.DataFrame(branches)
-    df.to_feather("neutMP.feather", compression="zstd")
+    finally:
+        # save output file
+        df = pd.DataFrame(branches)
+        df.to_feather("neutMP.feather", compression="zstd")
 
 if __name__ == "__main__":
     main()
