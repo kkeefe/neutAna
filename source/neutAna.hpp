@@ -6,11 +6,18 @@
 
 #include <algorithm>
 
-#define TILE_WIDTH 64;
-const int YMIN = 800 - TILE_WIDTH;
-const int YMAX = 800 + TILE_WIDTH;
-const int XMIN = 300 - TILE_WIDTH;
-const int XMAX = 300 + TILE_WIDTH;
+// #define TILE_WIDTH 64;
+// const int YMIN = 800 - TILE_WIDTH;
+// const int YMAX = 800 + TILE_WIDTH;
+// const int XMIN = 300 - TILE_WIDTH;
+// const int XMAX = 300 + TILE_WIDTH;
+
+// if using the entire APA range, use these constants
+// #define TILE_WIDTH 64;
+const int YMIN = 1;
+const int YMAX = 1500;
+const int XMIN = 1;
+const int XMAX = 575;
 
 // encoder for the pixel
 int encodePixel(const int& px, const int&py)
@@ -122,7 +129,7 @@ TH2I max_asic_resets(const std::vector<double>& p_resets,
                      const std::vector<int>& px,
                      const std::vector<int>& py)
 {
-    TH2I asicBins = TH2I("", "", 128/4, XMIN, XMAX, 128/4, YMIN, YMAX);
+    TH2I asicBins = TH2I("", "", (int)((XMAX-XMIN)/4), XMIN, XMAX, (int)((YMAX-YMIN)/4), YMIN, YMAX);
 
     // build the pixel hit map
     for(int i=0; i<p_resets.size(); ++i){
@@ -137,6 +144,8 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
 {
     td->cd();
     auto f = rdf.Filter(cut);
+
+    std::cout << "creating graphics in dir: " << td->GetName() << ".. ";
 
     auto thTile = f.Histo1D({"hTile", "hTile", 200, 0, 10000}, "tile_size");
     thTile->Draw();
@@ -216,5 +225,7 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     // TGraphErrors* tge = new TGraphErrors(n, &px[0], &py[0], &pex[0], &pey[0]);
     // tge->Draw("AP");
     // tge->Write();
-
+    //
+    //
+    std::cout << "graphics complete.\n";
 }

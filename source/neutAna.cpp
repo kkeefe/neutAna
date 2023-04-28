@@ -58,7 +58,7 @@ int main(int argc, char** argv){
     if(argc == 3){
         output_name = argv[2];
         std::cout << "saving arg name: " << output_name << std::endl;
-    } else if(argc != 2){
+    } else if(argc != 3){
         std::cout << "must provide only input file.\n";
         std::cout << "nArgs: " << argc << std::endl;
         return -1;
@@ -125,8 +125,8 @@ int main(int argc, char** argv){
     otf->Close();
 
     // save an output and also save outputs that the python simulation can run
-    // f.Snapshot("event_tree", "./saveRdf.root", {"asic_th2i"});
-    // std::cout << "Saving output event hists.\n";
+    f.Snapshot("event_tree", "./saveRdf.root", {"asic_th2i"});
+    std::cout << "Saving output event hists.\n";
 
     return 0;
 }

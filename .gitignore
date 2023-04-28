@@ -2,6 +2,9 @@ build
 .vscode
 *root
 *csv
+*json
+*feather
+*swp
 
 __pycache__
 .pytest_cache
