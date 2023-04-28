@@ -105,16 +105,16 @@ int main(int argc, char** argv){
         fillZposDir(theta4Dir, f, thCut4);
         fillZposDir(theta5Dir, f, thCut5);
 
-        TDirectory* z1Dir = otf->mkdir("Zpos1_const");
-        TDirectory* z2Dir = otf->mkdir("Zpos8_const");
-        TDirectory* z3Dir = otf->mkdir("Zpos18_const");
-        TDirectory* z4Dir = otf->mkdir("Zpos28_const");
-        TDirectory* z5Dir = otf->mkdir("Zpos35_const");
-        fillThetaDir(z1Dir, f, zpCut100);
-        fillThetaDir(z2Dir, f, zpCut800);
-        fillThetaDir(z3Dir, f, zpCut1800);
-        fillThetaDir(z4Dir, f, zpCut2800);
-        fillThetaDir(z5Dir, f, zpCut3500);
+        // TDirectory* z1Dir = otf->mkdir("Zpos1_const");
+        // TDirectory* z2Dir = otf->mkdir("Zpos8_const");
+        // TDirectory* z3Dir = otf->mkdir("Zpos18_const");
+        // TDirectory* z4Dir = otf->mkdir("Zpos28_const");
+        // TDirectory* z5Dir = otf->mkdir("Zpos35_const");
+        // fillThetaDir(z1Dir, f, zpCut100);
+        // fillThetaDir(z2Dir, f, zpCut800);
+        // fillThetaDir(z3Dir, f, zpCut1800);
+        // fillThetaDir(z4Dir, f, zpCut2800);
+        // fillThetaDir(z5Dir, f, zpCut3500);
     }
     catch(const std::exception& e)
     {
