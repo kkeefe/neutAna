@@ -5,6 +5,7 @@ import time
 from enum import Enum
 from unicodedata import decimal
 import numpy as np
+import random
 from dataclasses import dataclass
 
 # Endeavor config bits
@@ -446,7 +447,7 @@ class QPixAsic:
         self.transferTime = self.transferTicks * self.tOsc
         self.lastAbsHitTime = [0] * self.nPixels
         self._absTimeNow = 0
-        self.relTimeNow = (np.random.uniform() - 0.5) * self.tOsc
+        self.relTimeNow = (random.uniform(0, 1) - 0.5) * self.tOsc
         self.timeoutStart = self.relTimeNow
         self._startTime = self.relTimeNow
         self.relTicksNow = 0
@@ -734,6 +735,8 @@ class QPixAsic:
         if len(times) == 0:
             return
 
+        self._combTimes = 0
+
         # place all of the injected times and channels into self._times and self._channels
         if not isinstance(self._times, list):
             self._times = list(self._times)
@@ -760,25 +763,49 @@ class QPixAsic:
             self._channels = np.array([np.sum([0x1 << ch for ch in c]) for c in channels])
         else:
             channels = [0x1 << c for c in channels]
+            # timestamps = [self.CalcTicks(t) for t in times]
 
             # we want to make sure that we combine hits of multiple channels
             # that would happen within one clock cycle
             combineIndex = []
             goodIndex = 0
-            for i in range(len(times)-1):
-                if times[i+1] - times[goodIndex] < self.tOsc:
-                    combineIndex.append(i+1)
+            while True:
+                for i in range(len(times)-1):
+                    if self.CalcTicks(times[i+1]) == self.CalcTicks(times[goodIndex]):
+                        combineIndex.append(i+1)
+                    else:
+                        goodIndex = i+1
+
+                for k in reversed(combineIndex):
+                    # make sure this channel isn't already recorded on this timestamp
+                    if not (channels[k] & channels[k-1]):
+                        print(f"popped time: {times[k]} for channel {channels[k]:04x}")
+                        times.pop(k)
+                        self._combTimes += 1
+                        channels[k-1] |= channels.pop(k)
+                    else:
+                        print(f"channel {channels[k]:04x} already triggered {channels[k-1]:04x}..")
+                        # put what channels can be triggered onto this timestamp here,
+                        # and move the rest of them forward to the next available clock cycle
+                        newKs = channels[k] | channels[k-1]
+                        newK  = channels[k] & channels[k-1]
+                        channels[k-1] = newKs
+                        channels[k] = newK
+                        times[k] += self.tOsc
+
+                if len(combineIndex) == 0:
+                    break
                 else:
-                    goodIndex = i+1
+                    combineIndex = []
+                    goodIndex = 0
 
-            for k in reversed(combineIndex):
-                times.pop(k)
-                channels[k-1] |= channels.pop(k)
-
-            self._channels = np.array(channels)
-
+        print(f"{self} combtimes: {self._combTimes}")
+        self._channels = np.array(channels)
         self._times = np.array(times)
         self.totalInjected = len(times)
+
+        msg =  "Combined Injected Times and Channels must be same length"
+        assert len(self._times) == len(self._channels), msg
 
 
     def _ReadHits(self, targetTime):
