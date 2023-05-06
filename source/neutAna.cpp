@@ -104,17 +104,6 @@ int main(int argc, char** argv){
         fillZposDir(theta3Dir, f, thCut3);
         fillZposDir(theta4Dir, f, thCut4);
         fillZposDir(theta5Dir, f, thCut5);
-
-        // TDirectory* z1Dir = otf->mkdir("Zpos1_const");
-        // TDirectory* z2Dir = otf->mkdir("Zpos8_const");
-        // TDirectory* z3Dir = otf->mkdir("Zpos18_const");
-        // TDirectory* z4Dir = otf->mkdir("Zpos28_const");
-        // TDirectory* z5Dir = otf->mkdir("Zpos35_const");
-        // fillThetaDir(z1Dir, f, zpCut100);
-        // fillThetaDir(z2Dir, f, zpCut800);
-        // fillThetaDir(z3Dir, f, zpCut1800);
-        // fillThetaDir(z4Dir, f, zpCut2800);
-        // fillThetaDir(z5Dir, f, zpCut3500);
     }
     catch(const std::exception& e)
     {
@@ -125,7 +114,10 @@ int main(int argc, char** argv){
     otf->Close();
 
     // save an output and also save outputs that the python simulation can run
-    f.Snapshot("event_tree", "./saveRdf.root", {"asic_th2i"});
+    std::vector<std::string> cols = {"asic_th2i", "lepKE", "fsFHC", "fsFileNo",
+                                    "fsEvt", "fsPdg", "nEvt", "xpos", "ypos", "zpos", "axis_x", "axis_y", "axis_z",
+                                    "hadTot", "hadPip", "hadPim", "hadPi0", "hadP", "hadN", "hadOther"};
+    f.Snapshot("event_tree", "./saveRdf.root", cols);
     std::cout << "Saving output event hists.\n";
 
     return 0;

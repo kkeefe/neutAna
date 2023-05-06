@@ -159,7 +159,7 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     thAllPixel->Draw();
     thAllPixel->Write();
 
-    auto thPixel = f.Histo1D({"hPixel", "hPixel", 256, 0, 512}, "max_pixel_reset");
+    auto thPixel = f.Histo1D({"hPixel", "hPixel", 512, 0, 1024}, "max_pixel_reset");
     thPixel->Draw();
     thPixel->Write();
 
@@ -172,7 +172,7 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     thPixelRTDns->Write();
 
     auto nf = f.Define("max_asic_reset", "return asic_th2i.GetMaximum();");
-    auto thAsic = nf.Histo1D({"hAsic", "hAsic", 256, 0, 1024}, "max_asic_reset");
+    auto thAsic = nf.Histo1D({"hAsic", "hAsic", 512, 0, 2048}, "max_asic_reset");
     thAsic->Draw();
     thAsic->Write();
 
