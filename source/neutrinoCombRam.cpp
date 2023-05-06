@@ -71,6 +71,15 @@ struct neutrinoEvent{
     Int_t nFS = -42;
     Float_t lepKE = -42;
 
+    // updated hadron information
+    Float_t hadTot = -42;
+    Float_t hadPip = -42;
+    Float_t hadPim = -42;
+    Float_t hadPi0 = -42;
+    Float_t hadP = -42;
+    Float_t hadN = -42;
+    Float_t hadOther = -42;
+
     Float_t xpos  = -42; // vertex position
     Float_t ypos  = -42;
     Float_t zpos  = -42;
@@ -125,6 +134,15 @@ int main(int argc, char** argv){
     Int_t nFS = -42;
     Float_t lepKE = -42;
 
+    // hadron information
+    Float_t hadTot = -42;
+    Float_t hadPip = -42;
+    Float_t hadPim = -42;
+    Float_t hadPi0 = -42;
+    Float_t hadP = -42;
+    Float_t hadN = -42;
+    Float_t hadOther = -42;
+
     Float_t xpos  = -42; // vertex position
     Float_t ypos  = -42;
     Float_t zpos  = -42;
@@ -151,6 +169,14 @@ int main(int argc, char** argv){
     tt->SetBranchAddress("fsFileNo", &fsFileNo);
     tt->SetBranchAddress("nFS", &nFS);
     tt->SetBranchAddress("lepKE", &lepKE);
+    // hadron branches
+    tt->SetBranchAddress("hadTot", &hadTot);
+    tt->SetBranchAddress("hadPip", &hadPip);
+    tt->SetBranchAddress("hadPim", &hadPim);
+    tt->SetBranchAddress("hadPi0", &hadPi0);
+    tt->SetBranchAddress("hadP", &hadP);
+    tt->SetBranchAddress("hadN", &hadN);
+    tt->SetBranchAddress("hadOther", &hadOther);
     // vector takes
     tt->SetBranchAddress("pixel_x", &pixel_x);
     tt->SetBranchAddress("pixel_y", &pixel_y);
@@ -199,6 +225,15 @@ int main(int argc, char** argv){
             mNeut.at(id).isFHC = isFHC;
             mNeut.at(id).fsEnergy = fsEnergy;
 
+            // update hardon
+            mNeut.at(id).hadTot = hadTot;
+            mNeut.at(id).hadPip = hadPip;
+            mNeut.at(id).hadPim = hadPim;
+            mNeut.at(id).hadPi0 = hadPi0;
+            mNeut.at(id).hadP = hadP;
+            mNeut.at(id).hadN = hadN;
+            mNeut.at(id).hadOther = hadOther;
+
             // update vectors
             mNeut.at(id).pixel_reset.push_back(pixel_reset);
             mNeut.at(id).pixel_x.push_back(pixel_x);
@@ -225,6 +260,15 @@ int main(int argc, char** argv){
     Int_t nFS_ = -42;
     Float_t lepKE_ = -42;
 
+    // hadron information
+    Float_t hadTot_ = -42;
+    Float_t hadPip_ = -42;
+    Float_t hadPim_ = -42;
+    Float_t hadPi0_ = -42;
+    Float_t hadP_ = -42;
+    Float_t hadN_ = -42;
+    Float_t hadOther_ = -42;
+
     Float_t xpos_  = -42; // vertex position
     Float_t ypos_  = -42;
     Float_t zpos_  = -42;
@@ -232,6 +276,7 @@ int main(int argc, char** argv){
     Float_t axis_x_ = -42; // rotation angle branches
     Float_t axis_y_ = -42;
     Float_t axis_z_ = -42;
+
     // read through map, create new output file
     std::vector<Int_t> v_pixel_x_;
     std::vector<Int_t> v_pixel_y_;
@@ -254,6 +299,15 @@ int main(int argc, char** argv){
     ntt->Branch("fsFileNo", &fsFileNo_);
     ntt->Branch("nFS", &nFS_);
     ntt->Branch("lepKE", &lepKE_);
+
+    // hadron information
+    ntt->Branch("hadTot", &hadTot_);
+    ntt->Branch("hadPip", &hadPip_);
+    ntt->Branch("hadPim", &hadPim_);
+    ntt->Branch("hadPi0", &hadPi0_);
+    ntt->Branch("hadP", &hadP_);
+    ntt->Branch("hadN", &hadN_);
+    ntt->Branch("hadOther", &hadOther_);
     
     ntt->Branch("pixel_x", &v_pixel_x_);
     ntt->Branch("pixel_y", &v_pixel_y_);
@@ -280,6 +334,14 @@ int main(int argc, char** argv){
         v_pixel_x_ = neutEvt.pixel_x;
         v_pixel_y_ = neutEvt.pixel_y;
         v_pixel_reset_ = neutEvt.pixel_reset;
+        // update hadron information
+        hadTot_ = neutEvt.hadTot;
+        hadPip_ = neutEvt.hadPip;
+        hadPim_ = neutEvt.hadPim;
+        hadPi0_ = neutEvt.hadPi0;
+        hadP_ = neutEvt.hadP;
+        hadN_ = neutEvt.hadN;
+        hadOther_ = neutEvt.hadOther;
 
         ntt->Fill();
         if(++i%5000==0)std::cout << "filling hit: " << i << ", out of: " << cnt << std::endl;
