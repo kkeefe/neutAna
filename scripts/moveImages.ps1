@@ -1,7 +1,7 @@
 echo 'ni hao'
 
 ## neutrino analysis files to move
-cp ./output_images/*p:g*pdf ../../research/qp_dissertation/images/
+cp ./output_images/*pdf ../../research/qp_dissertation/images/
 
 ## digital simulation files to move
 ## note: fast and slow refer to high and low variance on ASIC local oscillator frq

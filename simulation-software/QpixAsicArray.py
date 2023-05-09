@@ -96,7 +96,7 @@ def MakeFifoBars(qparray):
     plt.tight_layout()
     plt.show()
 
-def heatMap(data, rows, cols, header="", ax=None, cbarlabel="", cbar_kw={}, **kwargs):
+def heatMap(data, rows, cols, outputFile=None, header="", ax=None, cbarlabel="", cbar_kw={}, **kwargs):
     """
     modified heatmap function based on matplotlib docs
     """
@@ -125,9 +125,14 @@ def heatMap(data, rows, cols, header="", ax=None, cbarlabel="", cbar_kw={}, **kw
 
     ax.set_title(f"{header}")
 
+    if outputFile is not None:
+        fig, new_ax = plt.subplots()
+        fig.savefig(outputFile)
+
+
     return im, cbar
 
-def viewAsicState(qparray, time_begin=-100e-9, time_end=300e-6, ordering="Normal"):
+def viewAsicState(qparray, time_begin=-100e-9, time_end=300e-6, time_scale=1, time_unit="s", ordering="Normal", title=None):
     """
     viewing function to take in a processed QpixArray class.
 
@@ -143,13 +148,18 @@ def viewAsicState(qparray, time_begin=-100e-9, time_end=300e-6, ordering="Normal
 
     asics = OrderAsics(qparray, ordering)
 
+    time_begin *= time_scale
+    time_end *= time_scale
+
+    print(f"time_end: {time_end}, time_begin: {time_begin}, scale: {time_scale}")
+
     # unpack the data into arrays of states and times
     states = [[] for i in range(len(asics))]
     absTimes = [[] for i in range(len(asics))]
     for i, asic in enumerate(asics):
         for (state, _, absTime, *_) in asic.state_times:
             states[i].append(state)
-            absTimes[i].append(absTime)
+            absTimes[i].append(absTime*time_scale)
 
     # make the graph 
     # fig, ax = plt.subplots(figsize=(15, 0.2*(qparray._ncols * qparray._nrows)))
@@ -181,8 +191,11 @@ def viewAsicState(qparray, time_begin=-100e-9, time_end=300e-6, ordering="Normal
 
     ax.grid(True)
     df = qparray._daqNode.fOsc
-    ax.set_yticks([i+1.15 for i in range(len(asics))], labels=[f"{asic.fOsc/df:.2f}({asic.row}, {asic.col})" for asic in asics])
+    ax.set_yticks([i+1.15 for i in range(len(asics))], labels=[f"{asic.fOsc/df:.2f} - ({asic.row}, {asic.col})" for asic in asics])
     ax.set_xlim(time_begin, time_end)
+    ax.set_xlabel(f"Time ({time_unit})")
+    if title is not None:
+        ax.set_title(title)
     plt.tight_layout()
 
     # fake legend points

@@ -779,12 +779,12 @@ class QPixAsic:
                 for k in reversed(combineIndex):
                     # make sure this channel isn't already recorded on this timestamp
                     if not (channels[k] & channels[k-1]):
-                        print(f"popped time: {times[k]} for channel {channels[k]:04x}")
+                        # print(f"popped time: {times[k]} for channel {channels[k]:04x}")
                         times.pop(k)
                         self._combTimes += 1
                         channels[k-1] |= channels.pop(k)
                     else:
-                        print(f"channel {channels[k]:04x} already triggered {channels[k-1]:04x}..")
+                        # print(f"channel {channels[k]:04x} already triggered {channels[k-1]:04x}..")
                         # put what channels can be triggered onto this timestamp here,
                         # and move the rest of them forward to the next available clock cycle
                         newKs = channels[k] | channels[k-1]
@@ -799,7 +799,7 @@ class QPixAsic:
                     combineIndex = []
                     goodIndex = 0
 
-        print(f"{self} combtimes: {self._combTimes}")
+        # print(f"{self} combtimes: {self._combTimes}")
         self._channels = np.array(channels)
         self._times = np.array(times)
         self.totalInjected = len(times)
