@@ -12,9 +12,10 @@ ROOT.EnableImplicitMT()
 def getFiles(dir):
     return [os.path.join(os.path.abspath(dir), f) for f in os.listdir(dir)]
 
-sort_dir = "./neutrinos/sorted"
-rtd_dir = "./neutrinos/rtd"
-rtdf_files = getFiles(rtd_dir)
+# sort_dir = "../data_radiogen/neutrinos/sorted"
+# rtd_dir = "../data_radiogen/neutrinos/rtd"
+# rtdf_files = getFiles(rtd_dir)
+rtdf_files = []
 
 def makeSortType(sort_file):
     """

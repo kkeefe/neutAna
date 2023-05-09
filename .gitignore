@@ -13,3 +13,6 @@ __pycache__
 evt*
 .ipynb_checkpoints
 .idea
+
+*tex
+*test*
