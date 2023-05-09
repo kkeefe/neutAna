@@ -16,7 +16,7 @@ from scripts.neutMakeJson import main as MakeNeutJson
 
 MAXTIME = 10 # time to integrate for, or time radiogenic data is based on
 INPUT_FILE = "../jsons/1k_rtd_data_200-210.json"
-INPUT_DATA_FILE = "../data_rtd/electron_nu_fhc_files.root"
+INPUT_DATA_FILE = "../data_rtd/total_eng_electron_nu_fhc_files.root"
 SEED = 420
 
 INT_PRD = 0.5
@@ -106,7 +106,7 @@ def pushTile(queue, r, neutFile, int_time=MAXTIME):
     np.random.seed(SEED)
 
     neutDF = getDF(neutFile)
-    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1)
+    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1, pctSpread=0.005)
     if neutDF["size"] == 0:
         queue.put(makeData(tile, r))
         return
@@ -147,7 +147,7 @@ def pullTile(queue, r, neutFile, int_time=MAXTIME):
     np.random.seed(SEED)
 
     neutDF = getDF(neutFile)
-    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1)
+    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1, pctSpread=0.005)
     if neutDF["size"] == 0:
         queue.put(makeData(tile, r))
         return
@@ -268,31 +268,40 @@ def main(seed=SEED):
     branches = makeBranches()
 
     # define the ranges of pull parameters to test
-    routes = ["left", "snake", "trunk"]
-    dims = [(4,4), (8,8), (10,14), (16,16)]
-    event_number = [i for i in range(1,5000)]
-    neutFiles = [(evt, xd, yd) for evt in event_number for xd, yd in dims]
+    # routes = ["left", "snake", "trunk"]
+    # dims = [(4,4), (8,8), (10,14), (16,16)]
+    # event_number = [i for i in range(1,5000)]
+    routes = ["snake"]
+    dims = [(4,4)]
+    event_number = [i for i in range(1,5)]
+    neutArgs = [(evt, xd, yd) for evt in event_number for xd, yd in dims]
+    neutFiles = [ GetOutputJsonFile(f, x, y) for f, x, y in neutArgs ]
 
     # make the files on the pool
-    msg = f"creating {len(neutFiles)} neutrino json files. continue?"
+    msg = f"creating {len(neutArgs)} neutrino json files. continue?"
     print(msg)
     pool = mp.Pool()
-    pool.starmap(MakeNeutFile, neutFiles)
+    pool.starmap(MakeNeutFile, neutArgs)
 
     # place holder for the completed tiles
     tile_queue = mp.Queue()
 
     # create a list of all of the processes that need to run.
     pull_args = [(r, f) for r in routes for f in neutFiles]
+    print("created json files:", neutArgs)
 
-    # only test snake for push routing on 8x8 tiles
+    # only test snake for push routing on 4x4 tiles
     push_args = [("snake", f) for f in neutFiles if "x-4" in f] 
+    print(push_args)
+    input("found push args?")
 
     # pull architecture procs
     procs = [mp.Process(target=pullTile, args=(tile_queue, *arg)) for arg in pull_args]
 
     # push archiecture procs
     procs.extend([mp.Process(target=pushTile, args=(tile_queue, *arg)) for arg in push_args])
+    msg = f"making nprocs: {len(procs)}"
+    input(msg)
 
     nProcs = len(procs)
     msg = f"begginning processing of {nProcs} tiles."

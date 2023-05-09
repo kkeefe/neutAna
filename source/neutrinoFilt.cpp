@@ -39,18 +39,18 @@ int main(int argc, char** argv){
 
     // use colNames to avoid loading in pixel_reset_truth and pixel_reset_track_id for these filters
     // as the buffer analysis largely doesn't care about the source of the electrons
-    std::vector<std::string> colNames = {"axis_x", "axis_y", "axis_z",
-                                         "xpos", "ypos", "zpos",
-                                         "fsFHC", "nEvt", "lepKE",
-                                         "fsPdg", "fsEnergy", "fsEvt",
-                                         "fsFileNo", "nFS", "pixel_x",
-                                         "pixel_y", "pixel_reset"};
+    // std::vector<std::string> colNames = {"axis_x", "axis_y", "axis_z",
+    //                                      "xpos", "ypos", "zpos",
+    //                                      "fsFHC", "nEvt", "lepKE",
+    //                                      "fsPdg", "fsEnergy", "fsEvt",
+    //                                      "fsFileNo", "nFS", "pixel_x",
+    //                                      "pixel_y", "pixel_reset"};
 
-    std::string tile_set = "pixel_x < " + std::to_string(XMAX) + " && pixel_x >= "+ std::to_string(XMIN) + " && "
-                           "pixel_y < " + std::to_string(YMAX) + " && pixel_y >= "+ std::to_string(YMIN);
+    // std::string tile_set = "pixel_x < " + std::to_string(XMAX) + " && pixel_x >= "+ std::to_string(XMIN) + " && "
+    //                        "pixel_y < " + std::to_string(YMAX) + " && pixel_y >= "+ std::to_string(YMIN);
     ROOT::EnableImplicitMT();
-    ROOT::RDataFrame rdf = ROOT::RDataFrame("event_tree", name.c_str(), colNames);
-    auto fdf = rdf.Filter("pixel_reset < 1e-1").Filter(tile_set.c_str());
+    ROOT::RDataFrame rdf = ROOT::RDataFrame("event_tree", name.c_str());
+    auto fdf = rdf.Filter("pixel_reset < 1e-1");
     std::string outputTree = "out.root";
     std::cout << "saving snapshot!\n";
     fdf.Snapshot("event_tree", outputTree.c_str());

@@ -80,6 +80,8 @@ struct neutrinoEvent{
     Float_t hadN = -42;
     Float_t hadOther = -42;
 
+    double energy_deposit = -42;
+
     Float_t xpos  = -42; // vertex position
     Float_t ypos  = -42;
     Float_t zpos  = -42;
@@ -143,6 +145,8 @@ int main(int argc, char** argv){
     Float_t hadN = -42;
     Float_t hadOther = -42;
 
+    double energy_deposit = -42;
+
     Float_t xpos  = -42; // vertex position
     Float_t ypos  = -42;
     Float_t zpos  = -42;
@@ -177,6 +181,7 @@ int main(int argc, char** argv){
     tt->SetBranchAddress("hadP", &hadP);
     tt->SetBranchAddress("hadN", &hadN);
     tt->SetBranchAddress("hadOther", &hadOther);
+    tt->SetBranchAddress("energy_deposit", &energy_deposit);
     // vector takes
     tt->SetBranchAddress("pixel_x", &pixel_x);
     tt->SetBranchAddress("pixel_y", &pixel_y);
@@ -201,6 +206,7 @@ int main(int argc, char** argv){
                     mNeut[id].axis_z = i_th[2];
                     mNeut[id].fsEnergy = i_en;
                     mNeut[id].event = i_evt;
+                    mNeut[id].energy_deposit = energy_deposit;
                 }
             }
         }
@@ -233,6 +239,8 @@ int main(int argc, char** argv){
             mNeut.at(id).hadP = hadP;
             mNeut.at(id).hadN = hadN;
             mNeut.at(id).hadOther = hadOther;
+
+            mNeut.at(id).energy_deposit = energy_deposit;
 
             // update vectors
             mNeut.at(id).pixel_reset.push_back(pixel_reset);
@@ -268,6 +276,8 @@ int main(int argc, char** argv){
     Float_t hadP_ = -42;
     Float_t hadN_ = -42;
     Float_t hadOther_ = -42;
+
+    Float_t energy_deposit_ = -42;
 
     Float_t xpos_  = -42; // vertex position
     Float_t ypos_  = -42;
@@ -308,6 +318,8 @@ int main(int argc, char** argv){
     ntt->Branch("hadP", &hadP_);
     ntt->Branch("hadN", &hadN_);
     ntt->Branch("hadOther", &hadOther_);
+
+    ntt->Branch("energy_deposit", &energy_deposit_);
     
     ntt->Branch("pixel_x", &v_pixel_x_);
     ntt->Branch("pixel_y", &v_pixel_y_);
@@ -342,6 +354,8 @@ int main(int argc, char** argv){
         hadP_ = neutEvt.hadP;
         hadN_ = neutEvt.hadN;
         hadOther_ = neutEvt.hadOther;
+
+        energy_deposit_ = neutEvt.energy_deposit;
 
         ntt->Fill();
         if(++i%5000==0)std::cout << "filling hit: " << i << ", out of: " << cnt << std::endl;

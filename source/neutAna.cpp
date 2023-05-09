@@ -74,12 +74,12 @@ int main(int argc, char** argv){
     std::cout << "found tree with entries: " << rdf.Count().GetValue() << std::endl;
 
     // filtering here
-    auto r = rdf.Define("tile_size", count_resets, {"pixel_reset", "pixel_x", "pixel_y"})
+    auto f = rdf.Define("tile_size", count_resets, {"pixel_reset", "pixel_x", "pixel_y"})
                 .Define("all_pixel_reset", all_pixel_resets, {"pixel_reset", "pixel_x", "pixel_y"})
                 .Define("max_pixel_reset", max_pixel_resets, {"all_pixel_reset"})
                 .Define("asic_th2i", max_asic_resets, {"pixel_reset", "pixel_x", "pixel_y"})
                 .Define("max_pixel_rtd", max_pixel_rtds, {"pixel_reset", "pixel_x", "pixel_y"});
-    auto f = r.Filter("tile_size > 0");
+    // auto f = r.Filter("tile_size > 0");
 
     int sum = f.Sum("tile_size").GetValue();
     double mean = f.Mean("tile_size").GetValue();
@@ -90,31 +90,31 @@ int main(int argc, char** argv){
     std::cout << "Found max pixel hits: " << Max << std::endl;
     std::cout << "Found min pixel hits: " << Min << std::endl;
 
-    TFile* otf = new TFile(output_name.c_str(), "RECREATE");
+    // TFile* otf = new TFile(output_name.c_str(), "RECREATE");
 
-    try
-    {
-        TDirectory* theta1Dir = otf->mkdir("Theta1_const");
-        TDirectory* theta2Dir = otf->mkdir("Theta2_const");
-        TDirectory* theta3Dir = otf->mkdir("Theta3_const");
-        TDirectory* theta4Dir = otf->mkdir("Theta4_const");
-        TDirectory* theta5Dir = otf->mkdir("Theta5_const");
-        fillZposDir(theta1Dir, f, thCut1);
-        fillZposDir(theta2Dir, f, thCut2);
-        fillZposDir(theta3Dir, f, thCut3);
-        fillZposDir(theta4Dir, f, thCut4);
-        fillZposDir(theta5Dir, f, thCut5);
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    // try
+    // {
+    //     TDirectory* theta1Dir = otf->mkdir("Theta1_const");
+    //     TDirectory* theta2Dir = otf->mkdir("Theta2_const");
+    //     TDirectory* theta3Dir = otf->mkdir("Theta3_const");
+    //     TDirectory* theta4Dir = otf->mkdir("Theta4_const");
+    //     TDirectory* theta5Dir = otf->mkdir("Theta5_const");
+    //     fillZposDir(theta1Dir, f, thCut1);
+    //     fillZposDir(theta2Dir, f, thCut2);
+    //     fillZposDir(theta3Dir, f, thCut3);
+    //     fillZposDir(theta4Dir, f, thCut4);
+    //     fillZposDir(theta5Dir, f, thCut5);
+    // }
+    // catch(const std::exception& e)
+    // {
+    //     std::cerr << e.what() << '\n';
+    // }
 
-    otf->Write();
-    otf->Close();
+    // otf->Write();
+    // otf->Close();
 
     // save an output and also save outputs that the python simulation can run
-    std::vector<std::string> cols = {"asic_th2i", "lepKE", "fsFHC", "fsFileNo",
+    std::vector<std::string> cols = {"asic_th2i", "max_pixel_reset", "max_pixel_rtd", "lepKE", "fsFHC", "fsFileNo",
                                     "fsEvt", "fsPdg", "nEvt", "xpos", "ypos", "zpos", "axis_x", "axis_y", "axis_z",
                                     "hadTot", "hadPip", "hadPim", "hadPi0", "hadP", "hadN", "hadOther"};
     f.Snapshot("event_tree", "./saveRdf.root", cols);

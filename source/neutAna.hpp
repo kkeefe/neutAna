@@ -6,7 +6,7 @@
 
 #include <algorithm>
 
-// #define TILE_WIDTH 64;
+#define TILE_WIDTH 64;
 // const int YMIN = 800 - TILE_WIDTH;
 // const int YMAX = 800 + TILE_WIDTH;
 // const int XMIN = 300 - TILE_WIDTH;
@@ -190,14 +190,14 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     tgAsic.SetTitle("tgMaxAsic");
     tgAsic.Write();
 
-    TGraph tgLepKEAsic = *nf.Graph("lepKE", "max_asic_reset");
+    TGraph tgLepKEAsic = *nf.Graph("lepKE+hadTot+hadOther", "max_asic_reset");
     tgLepKEAsic.Sort();
     tgLepKEAsic.Draw();
     tgLepKEAsic.SetName("tgLepKEAsic");
     tgLepKEAsic.SetTitle("tgLepKEAsic");
     tgLepKEAsic.Write();
 
-    TGraph tgLepKETile = *nf.Graph("lepKE", "tile_size");
+    TGraph tgLepKETile = *nf.Graph("lepKE+hadTot+hadOther", "tile_size");
     tgLepKETile.Sort();
     tgLepKETile.Draw();
     tgLepKETile.SetName("tgLepKETile");
