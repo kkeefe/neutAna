@@ -13,3 +13,6 @@ target_link_libraries(anaNeutrino ${ROOT_LIBRARIES})
 
 add_executable(fixHadNeut fixHadNeutrino.cpp)
 target_link_libraries(fixHadNeut ${ROOT_LIBRARIES})
+
+add_executable(updateEnergy updateEnergyDeposit.C)
+target_link_libraries(updateEnergy ${ROOT_LIBRARIES})
