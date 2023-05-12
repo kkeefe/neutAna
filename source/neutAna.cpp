@@ -59,7 +59,7 @@ int main(int argc, char** argv){
         output_name = argv[2];
         std::cout << "saving arg name: " << output_name << std::endl;
     } else if(argc != 3){
-        std::cout << "must provide only input file.\n";
+        std::cout << "must provide input file and output file name.\n";
         std::cout << "nArgs: " << argc << std::endl;
         return -1;
     }
@@ -85,10 +85,10 @@ int main(int argc, char** argv){
     double mean = f.Mean("tile_size").GetValue();
     double Max = f.Max("tile_size").GetValue();
     double Min = f.Min("tile_size").GetValue();
-    std::cout << "Found total pixel hits: " << sum << std::endl;
-    std::cout << "Found mean pixel hits: " << mean << std::endl;
-    std::cout << "Found max pixel hits: " << Max << std::endl;
-    std::cout << "Found min pixel hits: " << Min << std::endl;
+    std::cout << "Found total tile hits: " << sum << std::endl;
+    std::cout << "Found mean tile hits: " << mean << std::endl;
+    std::cout << "Found max tile hits: " << Max << std::endl;
+    std::cout << "Found min tile hits: " << Min << std::endl;
 
     // TFile* otf = new TFile(output_name.c_str(), "RECREATE");
 
@@ -114,11 +114,11 @@ int main(int argc, char** argv){
     // otf->Close();
 
     // save an output and also save outputs that the python simulation can run
+    std::cout << "Saving output event hists.\n";
     std::vector<std::string> cols = {"asic_th2i", "max_pixel_reset", "max_pixel_rtd", "lepKE", "fsFHC", "fsFileNo",
                                     "fsEvt", "fsPdg", "nEvt", "xpos", "ypos", "zpos", "axis_x", "axis_y", "axis_z",
-                                    "hadTot", "hadPip", "hadPim", "hadPi0", "hadP", "hadN", "hadOther"};
+                                    "hadTot", "hadPip", "hadPim", "hadPi0", "hadP", "hadN", "hadOther", "energy_deposit"};
     f.Snapshot("event_tree", "./saveRdf.root", cols);
-    std::cout << "Saving output event hists.\n";
 
     return 0;
 }

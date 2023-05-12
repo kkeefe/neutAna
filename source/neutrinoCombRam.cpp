@@ -214,10 +214,14 @@ int main(int argc, char** argv){
     }
     std::cout << "built the storage map with size: " << mNeut.size() << "..\n";
 
+    int filter_count = 0;
+
     // fill map here
     std::cout << "building the map from entries: " << tt->GetEntries() << "..\n";
     for(int i=0; i<tt->GetEntries(); ++i){
         tt->GetEntry(i);
+        // perform filters here, and deprecate neutrinoFilt.cpp
+        if(pixel_reset > 1e-1) {filter_count++;continue;}
         const int id = encode(fsEnergy, nEvent, axis_x, axis_z, zpos);
         try
         {
@@ -257,6 +261,8 @@ int main(int argc, char** argv){
         }
     }
     tf->Close();
+
+    std::cout << "entries filled.. filtered: " << filter_count << " events.\n";
 
     Int_t pdg_ = -42;
     Float_t energy_ = -42;
