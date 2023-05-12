@@ -2,9 +2,6 @@
 # Create the neutAna
 ############################################################
 
-add_executable(filtNeutrino neutrinoFilt.cpp)
-target_link_libraries(filtNeutrino ${ROOT_LIBRARIES})
-
 add_executable(combNeutrinoRam neutrinoCombRam.cpp)
 target_link_libraries(combNeutrinoRam ${ROOT_LIBRARIES})
 
@@ -13,6 +10,3 @@ target_link_libraries(anaNeutrino ${ROOT_LIBRARIES})
 
 add_executable(fixHadNeut fixHadNeutrino.cpp)
 target_link_libraries(fixHadNeut ${ROOT_LIBRARIES})
-
-add_executable(updateEnergy updateEnergyDeposit.C)
-target_link_libraries(updateEnergy ${ROOT_LIBRARIES})
