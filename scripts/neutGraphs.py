@@ -363,6 +363,8 @@ def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None):
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hPixel", "pixel_cZpos",  "Pixel Resets", "Counts")
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKEAsic", "LepKE_AsicResets_cZpos",  "LepKE", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_lepKE" if sg else None)
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKETile", "LepKE_TileResets_cZpos",  "LepKE", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_lepKE" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cZpos",  "Energy Deposit", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cZpos",  "Energy Deposit", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_EnergyDep" if sg else None)
 
     # control for zpos graphs
     for i, (zpos_dir, zd) in enumerate(zip(zpos_dirs, zdir)):
@@ -372,6 +374,8 @@ def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None):
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hPixel", "pixel_cTheta",  "Pixel Resets", "Counts")
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKEAsic", "LepKE_AsicResets_cTheta",  "LepKE", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKETile", "LepKE_TileResets_cTheta",  "LepKE", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cTheta",  "Energy Deposit", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cTheta",  "Energy Deposit", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_EnergyDep" if sg else None)
 
     tf.Close()
 
@@ -495,6 +499,7 @@ def main():
     # table_neut.set_cols_align(["l", "r", "c"])
     # table_neut.set_cols_valign(["t", "m", "b"])
     # # full tile analysis
+    readRootDataFile(infile="./test_graphs.root", file_dir="fhc_pdg12", lepPdg=12, isFHC=True)
     # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg12_fhc-1.root", file_dir="fhc_pdg12", lepPdg=12, isFHC=True)
     # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg-12_fhc-1.root", file_dir="fhc_pdg-12")
     # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg14_fhc-1.root", file_dir="fhc_pdg14")
@@ -516,23 +521,23 @@ def main():
     # readRootDataFile(infile=".\\pdfs\\muon_nu_rhc_graphs.root", file_dir="rhc_pdg14")
     # readRootDataFile(infile=".\\pdfs\\amuon_nu_rhc_graphs.root", file_dir="rhc_pdg-14")
 
-    readFeatherDataFile("mp60_16_fast", input_file="./scripts/neutMP60k.feather", size=16)
-    readFeatherDataFile("mp60_16_slow", input_file="./scripts/neutMP60k_lowFrq.feather", size=16)
-    readFeatherDataFile("mp60_64_fast", input_file="./scripts/neutMP60k.feather", size=64)
-    readFeatherDataFile("mp60_64_slow", input_file="./scripts/neutMP60k_lowFrq.feather", size=64)
-    readFeatherDataFile("mp60_140_fast", input_file="./scripts/neutMP60k.feather", size=140)
-    readFeatherDataFile("mp60_140_slow", input_file="./scripts/neutMP60k_lowFrq.feather", size=140)
-    readFeatherDataFile("mp60_256_fast", input_file="./scripts/neutMP60k.feather", size=256)
-    readFeatherDataFile("mp60_256_slow", input_file="./scripts/neutMP60k_lowFrq.feather", size=256)
-    table_digi_trans.add_rows(table_digi_trans_data)
-    table_digi_buf.add_rows(table_digi_buf_data)
-    table_fit_trans.add_rows(table_fit_trans_data)
-    trans_tab = latextable.draw_latex(table_digi_trans, caption="Transaction Data", label="tab:transact")
-    buff_tab = latextable.draw_latex(table_digi_buf, caption="Buffer Data", label="tab:buffers")
-    fit_tab = latextable.draw_latex(table_fit_trans, caption="Transaction Fit Results", label="tab:fit")
-    saveTable(buff_tab, table_buffer_file)
-    saveTable(trans_tab, table_trans_file)
-    saveTable(fit_tab, table_fit_file)
+    # readFeatherDataFile("mp60_16_fast", input_file="./scripts/neutMP60k.feather", size=16)
+    # readFeatherDataFile("mp60_16_slow", input_file="./scripts/neutMP60k_lowFrq.feather", size=16)
+    # readFeatherDataFile("mp60_64_fast", input_file="./scripts/neutMP60k.feather", size=64)
+    # readFeatherDataFile("mp60_64_slow", input_file="./scripts/neutMP60k_lowFrq.feather", size=64)
+    # readFeatherDataFile("mp60_140_fast", input_file="./scripts/neutMP60k.feather", size=140)
+    # readFeatherDataFile("mp60_140_slow", input_file="./scripts/neutMP60k_lowFrq.feather", size=140)
+    # readFeatherDataFile("mp60_256_fast", input_file="./scripts/neutMP60k.feather", size=256)
+    # readFeatherDataFile("mp60_256_slow", input_file="./scripts/neutMP60k_lowFrq.feather", size=256)
+    # table_digi_trans.add_rows(table_digi_trans_data)
+    # table_digi_buf.add_rows(table_digi_buf_data)
+    # table_fit_trans.add_rows(table_fit_trans_data)
+    # trans_tab = latextable.draw_latex(table_digi_trans, caption="Transaction Data", label="tab:transact")
+    # buff_tab = latextable.draw_latex(table_digi_buf, caption="Buffer Data", label="tab:buffers")
+    # fit_tab = latextable.draw_latex(table_fit_trans, caption="Transaction Fit Results", label="tab:fit")
+    # saveTable(buff_tab, table_buffer_file)
+    # saveTable(trans_tab, table_trans_file)
+    # saveTable(fit_tab, table_fit_file)
 
     # readNeutrinoAnaFile("anaGraphsFull.root")
 

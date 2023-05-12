@@ -139,6 +139,8 @@ TH2I max_asic_resets(const std::vector<double>& p_resets,
     return asicBins;
 }
 // typedef ROOT::RDF::RInterface<ROOT::Detail::RDF::RLoopManager> cached_rdf;
+// typedef ROOT::RDF::RInterface<ROOT::Detail::RDF::RLoopManager filtered_rdf;
+typedef ROOT::RDF::RInterface<ROOT::Detail::RDF::RLoopManager> defined_rdf;
 typedef ROOT::RDF::RInterface<ROOT::Detail::RDF::RJittedFilter,void> filtered_rdf;
 void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
 {
@@ -151,13 +153,9 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     thTile->Draw();
     thTile->Write();
 
-    auto th2En = f.Histo2D({"he", "he", 39, 250, 10000, 40, 0, 4000}, "fsEnergy", "tile_size");
-    th2En->Draw("colz");
-    th2En->Write();
-
-    auto thAllPixel = f.Histo1D({"hAllPixel", "hAllPixel", 128, 0, 128}, "all_pixel_reset");
-    thAllPixel->Draw();
-    thAllPixel->Write();
+    // auto th2En = f.Histo2D({"he", "he", 39, 250, 10000, 40, 0, 4000}, "fsEnergy", "tile_size");
+    // th2En->Draw("colz");
+    // th2En->Write();
 
     auto thPixel = f.Histo1D({"hPixel", "hPixel", 512, 0, 1024}, "max_pixel_reset");
     thPixel->Draw();
@@ -171,52 +169,65 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     thPixelRTDns->Draw();
     thPixelRTDns->Write();
 
-    auto nf = f.Define("max_asic_reset", "return asic_th2i.GetMaximum();");
-    auto thAsic = nf.Histo1D({"hAsic", "hAsic", 512, 0, 2048}, "max_asic_reset");
+    auto thAsic = f.Histo1D({"hAsic", "hAsic", 512, 0, 2048}, "max_asic_reset");
     thAsic->Draw();
     thAsic->Write();
 
-    TGraph tgPixel = *nf.Graph("tile_size", "max_pixel_reset");
+    TGraph tgPixel = *f.Graph("tile_size", "max_pixel_reset");
     tgPixel.Sort();
     tgPixel.Draw();
     tgPixel.SetName("tgMaxPixel");
     tgPixel.SetTitle("tgMaxPixel");
     tgPixel.Write();
 
-    TGraph tgAsic = *nf.Graph("tile_size", "max_asic_reset");
+    TGraph tgAsic = *f.Graph("tile_size", "max_asic_reset");
     tgAsic.Sort();
     tgAsic.Draw();
     tgAsic.SetName("tgMaxAsic");
     tgAsic.SetTitle("tgMaxAsic");
     tgAsic.Write();
 
-    TGraph tgLepKEAsic = *nf.Graph("lepKE+hadTot+hadOther", "max_asic_reset");
+    TGraph tgLepKEAsic = *f.Graph("neutEnergy", "max_asic_reset");
     tgLepKEAsic.Sort();
     tgLepKEAsic.Draw();
     tgLepKEAsic.SetName("tgLepKEAsic");
     tgLepKEAsic.SetTitle("tgLepKEAsic");
     tgLepKEAsic.Write();
 
-    TGraph tgLepKETile = *nf.Graph("lepKE+hadTot+hadOther", "tile_size");
+    TGraph tgLepKETile = *f.Graph("neutEnergy", "tile_size");
     tgLepKETile.Sort();
     tgLepKETile.Draw();
     tgLepKETile.SetName("tgLepKETile");
     tgLepKETile.SetTitle("tgLepKETile");
     tgLepKETile.Write();
 
-    TGraph tgnFSAsic = *nf.Graph("nFS", "max_asic_reset");
-    tgnFSAsic.Sort();
-    tgnFSAsic.Draw();
-    tgnFSAsic.SetName("tgnFSAsic");
-    tgnFSAsic.SetTitle("tgnFSAsic");
-    tgnFSAsic.Write();
+    TGraph tgEnergyDepAsic = *f.Graph("energy_deposit", "max_asic_reset");
+    tgLepKEAsic.Sort();
+    tgLepKEAsic.Draw();
+    tgLepKEAsic.SetName("tgEnergyDepAsic");
+    tgLepKEAsic.SetTitle("tgEnergyDepAsic");
+    tgLepKEAsic.Write();
 
-    TGraph tgnFSTile = *nf.Graph("nFS", "tile_size");
-    tgnFSTile.Sort();
-    tgnFSTile.Draw();
-    tgnFSTile.SetName("tgnFSTile");
-    tgnFSTile.SetTitle("tgnFSTile");
-    tgnFSTile.Write();
+    TGraph tgEnergyDepTile = *f.Graph("energy_deposit", "tile_size");
+    tgLepKETile.Sort();
+    tgLepKETile.Draw();
+    tgLepKETile.SetName("tgEnergyDepTile");
+    tgLepKETile.SetTitle("tgEnergyDepTile");
+    tgLepKETile.Write();
+
+    // TGraph tgnFSAsic = *f.Graph("nFS", "max_asic_reset");
+    // tgnFSAsic.Sort();
+    // tgnFSAsic.Draw();
+    // tgnFSAsic.SetName("tgnFSAsic");
+    // tgnFSAsic.SetTitle("tgnFSAsic");
+    // tgnFSAsic.Write();
+
+    // TGraph tgnFSTile = *f.Graph("nFS", "tile_size");
+    // tgnFSTile.Sort();
+    // tgnFSTile.Draw();
+    // tgnFSTile.SetName("tgnFSTile");
+    // tgnFSTile.SetTitle("tgnFSTile");
+    // tgnFSTile.Write();
 
     // make a TGraphErrors here
     // int n=0;

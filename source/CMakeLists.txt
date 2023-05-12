@@ -10,3 +10,6 @@ target_link_libraries(anaNeutrino ${ROOT_LIBRARIES})
 
 add_executable(fixHadNeut fixHadNeutrino.cpp)
 target_link_libraries(fixHadNeut ${ROOT_LIBRARIES})
+
+add_executable(graphsNeutrino neutGraphs.cpp)
+target_link_libraries(graphsNeutrino ${ROOT_LIBRARIES})
