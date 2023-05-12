@@ -129,7 +129,7 @@ TH2I max_asic_resets(const std::vector<double>& p_resets,
                      const std::vector<int>& px,
                      const std::vector<int>& py)
 {
-    TH2I asicBins = TH2I("", "", (int)((XMAX-XMIN)/4), XMIN, XMAX, (int)((YMAX-YMIN)/4), YMIN, YMAX);
+    TH2I asicBins = TH2I("", "", 144, 0.5, 0.5+144*4, 375, 0.5, 1500.5);
 
     // build the pixel hit map
     for(int i=0; i<p_resets.size(); ++i){
