@@ -106,6 +106,8 @@ class canvas_counter:
 
         if legend_pos is not None and legend_pos == "tr":
             ROOT.gPad.BuildLegend(0.75, 0.75, 0.95, 0.95, "")
+        if legend_pos is not None and legend_pos == "tl":
+            ROOT.gPad.BuildLegend(0.15, 0.75, 0.35, 0.95, "")
         elif legend_pos is not None and legend_pos == "br":
             ROOT.gPad.BuildLegend(0.75, 0.15, 0.95, 0.35, "")
 
@@ -232,7 +234,7 @@ def make_integral_hist(hists, output_name, tdirs, zdirs, lepPdg, isFHC, x_axis_t
     return makeMultiGraph(graphs, output_name, x_axis_title, y_axis_title, title)
 
 
-def make_average_tmg(graphs, output_name, x_bins=None, title=None):
+def make_average_tmg(graphs, output_name, x_bins, title=None):
     """
     each graph represents an ASIC in this cut with the corresponding x, y value
 
@@ -243,42 +245,26 @@ def make_average_tmg(graphs, output_name, x_bins=None, title=None):
     nGraphs = len(graphs)
     assert nGraphs > 0, "did not receive any graphs at make_average_tmg"
 
+    def bin(x):
+        prev_bin = 0
+        for i, x_bin in enumerate(x_bins):
+            if x < x_bin:
+                return prev_bin
+            else:
+                prev_bin = x_bin
+        return x_bin
+
+
     newGraphs = []
     for graph in graphs:
         nPoints = graph.GetN()
-        xpoints = graph.GetX()
-        ydata = graph.GetY()
 
-        # raw points
-        graph_ind = np.array([graph.GetPointX(i) for i in range(nPoints)], dtype=np.double)
-        if x_bins is not None:
-            ind = []
-            for i, gi in enumerate(graph_ind):
-                for j, xi in enumerate(x_bins):
-                    if xi > gi:
-                        ind.append(x_bins[j-1])
-                        break
-                    elif i == len(graph_ind) - 1 or j == len(x_bins) - 1:
-                        ind.append(x_bins[-1])
-                        break
-            graph_ind = ind
+        data = [ graph.GetPointY(i) for i in range(nPoints) ]
+        graph_bin = sorted([ bin(graph.GetPointX(i)) for i in range(nPoints) ])
 
+        graph_ind, data = zip(*sorted(zip(graph_bin, data)))
         unique_ind = np.array(np.unique(graph_ind), dtype=np.double)
-        unique_ind_id = 0
-        cur_unique_ind = unique_ind[unique_ind_id]
-
-        # build the means and unique index
-        data = [[]]
-        for i in range(nPoints):
-            if graph_ind[i] == cur_unique_ind:
-                data[-1].append(graph.GetPointY(i))
-            else:
-                unique_ind_id += 1
-                cur_unique_ind = unique_ind[unique_ind_id]
-                data.append([])
-                data[-1].append(graph.GetPointY(i)) 
-
-        mean_data = np.array([np.mean(d) for d in data], dtype=np.double)
+        mean_data = np.array([ np.mean([d for ind, d in zip(graph_ind, data) if ind == uid]) for uid in unique_ind], dtype=np.double)
 
         # errors
         ex = np.array([0]*len(unique_ind), dtype=np.double)
@@ -325,15 +311,16 @@ def makeGraphs(tf_dict, tdirs, zdirs, output_dir, graph_name, output_name, x_axi
         stack = make_stack_hist(asic_ints, output_name, x_axis_title, y_axis_title, title=title)
         if saveGraphs is not None:
             sg = saveGraphs+"_stack_integral"+f"_pdg{lepPdg}"+f"_{fhc}"
-        root_canvas.Add(stack, output_dir, x_axis_title, y_axis_title, saveGraphs=sg, legend_pos="tr")
+        root_canvas.Add(stack, output_dir, x_axis_title, y_axis_title, saveGraphs=sg, legend_pos="tl")
 
     # manage TGraphs
     if isinstance(asic_ints[0], ROOT.TGraph):
         lepKEbins = list(range(250,10000,250))
         tmg = make_average_tmg(asic_ints, output_name, x_bins=lepKEbins, title=title)
+        # tmg = make_average_tmg(asic_ints, output_name, title=title)
         if saveGraphs is not None:
             sg = saveGraphs+"_multigraph"+f"_pdg{lepPdg}"+f"_{fhc}"
-        root_canvas.Add(tmg, output_dir, x_axis_title, y_axis_title, saveGraphs=sg, legend_pos="tr")
+        root_canvas.Add(tmg, output_dir, x_axis_title, y_axis_title, saveGraphs=sg, legend_pos="tl")
 
 
 def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None):
@@ -362,9 +349,9 @@ def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None):
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hAsic",  "asic_cZpos", "ASIC Resets", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC" if sg else None)
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hPixel", "pixel_cZpos",  "Pixel Resets", "Counts")
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKEAsic", "LepKE_AsicResets_cZpos",  "LepKE", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_lepKE" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKETile", "LepKE_TileResets_cZpos",  "LepKE", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_lepKE" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cZpos",  "Energy Deposit", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cZpos",  "Energy Deposit", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKETile", "LepKE_TileResets_cZpos",  "LepKE", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_lepKE" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cZpos",  "Energy Deposit (MeV)", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cZpos",  "Energy Deposit (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_EnergyDep" if sg else None)
 
     # control for zpos graphs
     for i, (zpos_dir, zd) in enumerate(zip(zpos_dirs, zdir)):
@@ -374,8 +361,8 @@ def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None):
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hPixel", "pixel_cTheta",  "Pixel Resets", "Counts")
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKEAsic", "LepKE_AsicResets_cTheta",  "LepKE", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKETile", "LepKE_TileResets_cTheta",  "LepKE", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cTheta",  "Energy Deposit", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cTheta",  "Energy Deposit", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cTheta",  "Energy Deposit (MeV)", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cTheta",  "Energy Deposit (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{theta_values[theta_dirs[i]]}_Tile_EnergyDep" if sg else None)
 
     tf.Close()
 
@@ -393,7 +380,7 @@ def readFeatherDataFile(output_name, input_file="./scripts/neutMP60k.feather", s
     df = pd.read_feather(input_file)
     architectures = pd.unique(df["Architecture"])
 
-    df = df[df["Route"] != "None"]
+    df = df[(df["Route"] != "None") and (df["Route"] == "Push")]
     df['size'] = df['AsicX'].map(len)
     sizes = pd.unique(df['size'])
     df = df[df['size'] == size]
@@ -542,7 +529,7 @@ def main():
     # readNeutrinoAnaFile("anaGraphsFull.root")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 1:
-        print("only run, no args")
-        sys.exit(-1)
+    # if len(sys.argv) != 1:
+    #     print("only run, no args")
+    #     sys.exit(-1)
     main()
