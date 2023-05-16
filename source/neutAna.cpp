@@ -25,10 +25,9 @@ int main(int argc, char** argv){
 
     // defines and filters here
     auto f = rdf.Define("tile_size", count_resets, {"pixel_reset", "pixel_x", "pixel_y"})
-                .Define("all_pixel_reset", all_pixel_resets, {"pixel_reset", "pixel_x", "pixel_y"})
-                .Define("max_pixel_reset", max_pixel_resets, {"all_pixel_reset"})
-                .Define("asic_th2i", max_asic_resets, {"pixel_reset", "pixel_x", "pixel_y"})
-                .Define("max_pixel_rtd", max_pixel_rtds, {"pixel_reset", "pixel_x", "pixel_y"});
+                // .Define("all_pixel_reset", all_pixel_resets, {"pixel_reset", "pixel_x", "pixel_y"})
+                // .Define("max_pixel_reset", max_pixel_resets, {"all_pixel_reset"})
+                .Define("asic_th2i", max_asic_resets, {"pixel_reset", "pixel_x", "pixel_y"});
 
     int sum = f.Sum("tile_size").GetValue();
     double mean = f.Mean("tile_size").GetValue();
@@ -41,10 +40,19 @@ int main(int argc, char** argv){
 
     // save an output and also save outputs that the python simulation can run
     std::cout << "Saving output event hists.\n";
-    std::vector<std::string> cols = {"asic_th2i", "max_pixel_reset", "max_pixel_rtd", "lepKE", "fsFHC", "fsFileNo",
+    std::vector<std::string> cols = {"tile_size", "asic_th2i", "lepKE", "fsFHC", "fsFileNo",
                                     "fsEnergy", "nFS", "fsEvt", "fsPdg", "nEvt", "xpos", "ypos", "zpos", "axis_x", "axis_y", "axis_z",
                                     "hadTot", "hadPip", "hadPim", "hadPi0", "hadP", "hadN", "hadOther", "energy_deposit"};
-    f.Snapshot("event_tree", output_name.c_str(), cols);
+    try{
+        f.Snapshot("event_tree", output_name.c_str(), cols);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+
+    std::cout << "saving complete.\n";
 
     return 0;
+
 }

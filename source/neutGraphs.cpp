@@ -61,12 +61,12 @@ int main(int argc, char** argv){
     std::cout << "found tree with entries: " << rdf.Count().GetValue() << std::endl;
 
     // defines and filters here
-    auto f = rdf.Define("tile_size", "return asic_th2i.GetSum();")
-                .Define("neutEnergy", "return hadTot+lepKE+hadOther;")
-                .Define("max_asic_reset", "return asic_th2i.GetMaximum()");
 
+    std::cout << "building directories\n";
     try
     {
+        auto f = rdf.Define("neutEnergy", "return hadTot+lepKE+hadOther;")
+                    .Define("max_asic_reset", "return asic_th2i.GetMaximum()");
         TDirectory* theta1Dir = otf->mkdir("Theta1_const");
         TDirectory* theta2Dir = otf->mkdir("Theta2_const");
         TDirectory* theta3Dir = otf->mkdir("Theta3_const");

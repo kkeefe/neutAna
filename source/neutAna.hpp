@@ -124,6 +124,48 @@ std::vector<double> max_pixel_rtds(const std::vector<double>& p_resets,
     return max_rtds;
 }
 
+// define the ASIC weight based on the energy deposit or the 
+double make_weight(const double& energy_range)
+{
+    double weight;
+    // values read off of the TDR
+    // ve apperance
+    // 14.8, // 500
+    // 25,   // 750
+    // 26,   // 1G
+    // 35,   // 1.25G
+    // 57,   // 1.5G
+    // 89,   // 1.75
+    // 110,  // 2
+    // 130,  // 2.25
+    // 135,  // 2.5
+    // 133,  // 2.75
+    // 123,  // 3
+    // 111,  // 3.25
+    // 92,  // 3.5
+    // 73,  // 3.75
+    // 58,  // 4
+    // 42,  // 4.25
+    // 30,  // 4.5
+    // 22,  // 4.75
+    // 17,  // 5
+    // 15,  // 5.25
+    // 12, // 5.5
+    // 10.5, // 5.75
+    // 10, // 6
+    // 7.5, // 6.25
+    // 7.25, // 6.5
+    // 6.5, // 6.75
+    // 6.4 // 7
+    // 6.0, // 7.25
+    // 6.0, // 7.5
+    // 6.0, // 7.75
+    // otherwise 0 for neutrino oscillation
+
+
+    return weight;
+}
+
 // return the maximum asic hit here
 TH2I max_asic_resets(const std::vector<double>& p_resets,
                      const std::vector<int>& px,
@@ -153,32 +195,32 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     thTile->Draw();
     thTile->Write();
 
-    // auto th2En = f.Histo2D({"he", "he", 39, 250, 10000, 40, 0, 4000}, "fsEnergy", "tile_size");
-    // th2En->Draw("colz");
-    // th2En->Write();
+    auto th2En = f.Histo2D({"he", "he", 39, 250, 10000, 40, 0, 4000}, "fsEnergy", "tile_size");
+    th2En->Draw("colz");
+    th2En->Write();
 
-    auto thPixel = f.Histo1D({"hPixel", "hPixel", 512, 0, 1024}, "max_pixel_reset");
-    thPixel->Draw();
-    thPixel->Write();
+    // auto thPixel = f.Histo1D({"hPixel", "hPixel", 512, 0, 1024}, "max_pixel_reset");
+    // thPixel->Draw();
+    // thPixel->Write();
 
-    auto thPixelRTD = f.Histo1D({"hPixelRTD", "hPixelRTD", 512, 0, 10e-6}, "max_pixel_rtd");
-    thPixelRTD->Draw();
-    thPixelRTD->Write();
+    // auto thPixelRTD = f.Histo1D({"hPixelRTD", "hPixelRTD", 512, 0, 10e-6}, "max_pixel_rtd");
+    // thPixelRTD->Draw();
+    // thPixelRTD->Write();
 
-    auto thPixelRTDns = f.Histo1D({"hPixelRTDns", "hPixelRTDns", 512, 0, 100e-9}, "max_pixel_rtd");
-    thPixelRTDns->Draw();
-    thPixelRTDns->Write();
+    // auto thPixelRTDns = f.Histo1D({"hPixelRTDns", "hPixelRTDns", 512, 0, 100e-9}, "max_pixel_rtd");
+    // thPixelRTDns->Draw();
+    // thPixelRTDns->Write();
 
     auto thAsic = f.Histo1D({"hAsic", "hAsic", 512, 0, 2048}, "max_asic_reset");
     thAsic->Draw();
     thAsic->Write();
 
-    TGraph tgPixel = *f.Graph("tile_size", "max_pixel_reset");
-    tgPixel.Sort();
-    tgPixel.Draw();
-    tgPixel.SetName("tgMaxPixel");
-    tgPixel.SetTitle("tgMaxPixel");
-    tgPixel.Write();
+    // TGraph tgPixel = *f.Graph("tile_size", "max_pixel_reset");
+    // tgPixel.Sort();
+    // tgPixel.Draw();
+    // tgPixel.SetName("tgMaxPixel");
+    // tgPixel.SetTitle("tgMaxPixel");
+    // tgPixel.Write();
 
     TGraph tgAsic = *f.Graph("tile_size", "max_asic_reset");
     tgAsic.Sort();
@@ -215,19 +257,19 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     tgLepKETile.SetTitle("tgEnergyDepTile");
     tgLepKETile.Write();
 
-    // TGraph tgnFSAsic = *f.Graph("nFS", "max_asic_reset");
-    // tgnFSAsic.Sort();
-    // tgnFSAsic.Draw();
-    // tgnFSAsic.SetName("tgnFSAsic");
-    // tgnFSAsic.SetTitle("tgnFSAsic");
-    // tgnFSAsic.Write();
+    TGraph tgnFSAsic = *f.Graph("nFS", "max_asic_reset");
+    tgnFSAsic.Sort();
+    tgnFSAsic.Draw();
+    tgnFSAsic.SetName("tgnFSAsic");
+    tgnFSAsic.SetTitle("tgnFSAsic");
+    tgnFSAsic.Write();
 
-    // TGraph tgnFSTile = *f.Graph("nFS", "tile_size");
-    // tgnFSTile.Sort();
-    // tgnFSTile.Draw();
-    // tgnFSTile.SetName("tgnFSTile");
-    // tgnFSTile.SetTitle("tgnFSTile");
-    // tgnFSTile.Write();
+    TGraph tgnFSTile = *f.Graph("nFS", "tile_size");
+    tgnFSTile.Sort();
+    tgnFSTile.Draw();
+    tgnFSTile.SetName("tgnFSTile");
+    tgnFSTile.SetTitle("tgnFSTile");
+    tgnFSTile.Write();
 
     // make a TGraphErrors here
     // int n=0;
