@@ -199,7 +199,7 @@ def makeMultiGraph(graphs, output_name, x_axis_title, y_axis_title, title=None):
 
 
 def make_integral_hist(hists, output_name, tdirs, zdirs, lepPdg, isFHC, x_axis_title="Maximum ASIC Buffer Depth",
-                    y_axis_title="Percent of Events Fully Captured", title=None):
+                    y_axis_title="Percent of Events Fully Captured", title=None, add_to_table=False):
     """
     create a running integral from a list of histograms passed here
     """
@@ -220,7 +220,7 @@ def make_integral_hist(hists, output_name, tdirs, zdirs, lepPdg, isFHC, x_axis_t
         tg.SetTitle(asic.GetTitle())
         graphs.append(tg)
 
-        if lepPdg is not None and isFHC is not None:
+        if add_to_table:
             if not isinstance(zdirs, list):
                 zpos = zdirs
                 theta = tdirs[i]
@@ -284,7 +284,7 @@ def make_average_tmg(graphs, output_name, x_bins, title=None):
     return tmg
 
 
-def makeGraphs(tf_dict, tdirs, zdirs, output_dir, graph_name, output_name, x_axis_title=None, y_axis_title=None, lepPdg=None, isFHC=None, saveGraphs=None):
+def makeGraphs(tf_dict, tdirs, zdirs, output_dir, graph_name, output_name, x_axis_title=None, y_axis_title=None, lepPdg=None, isFHC=None, saveGraphs=None, add_to_table=False):
 
     asic_ints = get_graphs(tf_dict, tdirs, zdirs, graph_name)
     if len(asic_ints) == 0:
@@ -303,7 +303,7 @@ def makeGraphs(tf_dict, tdirs, zdirs, output_dir, graph_name, output_name, x_axi
     if isFHC is not None and saveGraphs is not None:
         fhc = "fhc" if isFHC else "rhc" 
     if isinstance(asic_ints[0], ROOT.TH1):
-        tmg = make_integral_hist(asic_ints, output_name, tdirs, zdirs, lepPdg, isFHC, title=title)
+        tmg = make_integral_hist(asic_ints, output_name, tdirs, zdirs, lepPdg, isFHC, title=title, add_to_table=add_to_table)
         if saveGraphs is not None:
             sg = saveGraphs+"_integral"+f"_pdg{lepPdg}"+f"_{fhc}"
         root_canvas.Add(tmg, output_dir, x_axis_title, y_axis_title, saveGraphs=sg ,legend_pos="br")
@@ -323,7 +323,7 @@ def makeGraphs(tf_dict, tdirs, zdirs, output_dir, graph_name, output_name, x_axi
         root_canvas.Add(tmg, output_dir, x_axis_title, y_axis_title, saveGraphs=sg, legend_pos="tl")
 
 
-def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None):
+def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None, saveGraphs=False):
     """
     how to parse the output data graph of neutAna.cpp
     """
@@ -344,25 +344,25 @@ def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None):
 
     # control for theta graphs
     for i, (theta_dir, td) in enumerate(zip(theta_dirs, tdir)):
-        sg = True if i == 0 and lepPdg is not None else None
+        sg = saveGraphs
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hTile",  "tile_cZpos", "Tile Resets", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hAsic",  "asic_cZpos", "ASIC Resets", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hPixel", "pixel_cZpos",  "Pixel Resets", "Counts")
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKEAsic", "LepKE_AsicResets_cZpos",  "LepKE", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_lepKE" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hAsic",  "asic_cZpos", "FIFO Depth", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC" if sg else None, add_to_table=True)
+        # makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hPixel", "pixel_cZpos",  "Pixel Resets", "Counts")
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKEAsic", "LepKE_AsicResets_cZpos",  "LepKE", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_lepKE" if sg else None)
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKETile", "LepKE_TileResets_cZpos",  "LepKE", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_lepKE" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cZpos",  "Energy Deposit (MeV)", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cZpos",  "Energy Deposit (MeV)", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cZpos",  "Energy Deposit (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_EnergyDep" if sg else None)
 
     # control for zpos graphs
     for i, (zpos_dir, zd) in enumerate(zip(zpos_dirs, zdir)):
-        sg = True if zpos_values[zpos_dirs[i]] == 180 and lepPdg is not None else None
+        sg = saveGraphs
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hTile",  "tile_cTheta", "Tile Resets", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_Tile" if sg else None)
-        makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hAsic",  "asic_cTheta", "ASIC Resets", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC" if sg else None)
-        makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hPixel", "pixel_cTheta",  "Pixel Resets", "Counts")
-        makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKEAsic", "LepKE_AsicResets_cTheta",  "LepKE", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
+        makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hAsic",  "asic_cTheta", "FIFO Depth", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC" if sg else None, add_to_table=True)
+        # makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hPixel", "pixel_cTheta",  "Pixel Resets", "Counts")
+        makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKEAsic", "LepKE_AsicResets_cTheta",  "LepKE", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKETile", "LepKE_TileResets_cTheta",  "LepKE", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cTheta",  "Energy Deposit (MeV)", "Max ASIC Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cTheta",  "Energy Deposit (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{theta_values[theta_dirs[i]]}_Tile_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cTheta",  "Energy Deposit (MeV)", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cTheta",  "Energy Deposit (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_Tile_EnergyDep" if sg else None)
 
     tf.Close()
 
@@ -371,16 +371,8 @@ def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None):
 ############################     Digital Ana     ##############################
 ###############################################################################
 
-def readFeatherDataFile(output_name, input_file="./scripts/neutMP60k.feather", size=16):
-    """
-    read the input feather file, create output PDFs, and fill the texttables to print
-    to LaTex
-    """
-    
-    df = pd.read_feather(input_file)
-    architectures = pd.unique(df["Architecture"])
 
-    df = df[(df["Route"] != "None") and (df["Route"] == "Push")]
+def makePullGraphs(df):
     df['size'] = df['AsicX'].map(len)
     sizes = pd.unique(df['size'])
     df = df[df['size'] == size]
@@ -479,24 +471,44 @@ def readFeatherDataFile(output_name, input_file="./scripts/neutMP60k.feather", s
     table_digi_buf_data.append(buf_data)
     table_fit_trans_data.append(fit_data)
 
+def makePushGraphs(df):
+    """
+    Make the equivalent graphs for the push architecture
+    """
+    pass
+
+def readFeatherDataFile(output_name, input_file="./scripts/neutMP60k.feather", size=16):
+    """
+    read the input feather file, create output PDFs, and fill the texttables to print
+    to LaTex
+    """
+    
+    df = pd.read_feather(input_file)
+    architectures = pd.unique(df["Architecture"])
+
+    pull_df = df[(df["Route"] != "None") and (df["Architecture"] == "Pull")]
+    makePullGraphs(pull_df)
+
+    push_df = df[(df["Route"] != "None") and (df["Architecture"] == "Push")]
+    makePushGraphs(push_df)
+
 
 def main():
 
-    # table_neut = Texttable()
-    # table_neut.set_cols_align(["l", "r", "c"])
-    # table_neut.set_cols_valign(["t", "m", "b"])
     # # full tile analysis
-    readRootDataFile(infile="./test_graphs.root", file_dir="fhc_pdg12", lepPdg=12, isFHC=True)
-    # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg12_fhc-1.root", file_dir="fhc_pdg12", lepPdg=12, isFHC=True)
-    # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg-12_fhc-1.root", file_dir="fhc_pdg-12")
-    # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg14_fhc-1.root", file_dir="fhc_pdg14")
-    # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg-14_fhc-1.root", file_dir="fhc_pdg-14")
-    # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg12_fhc-rhc.root", file_dir="rhc_pdg12")
-    # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg-12_fhc-rhc.root", file_dir="rhc_pdg-12")
-    # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg14_fhc-rhc.root", file_dir="rhc_pdg14")
-    # readRootDataFile(infile=".\\pdfs\\full_graphs_pdg-14_fhc-rhc.root", file_dir="rhc_pdg-14")
-    # neut_buff_tab = latextable.draw_latex(table_neut_buf_data, caption="APA Integral Data", label="tab:apa_sum")
-    # saveTable(neut_buff_tab, table_neut_buf_file)
+    readRootDataFile(infile="./pdfs/ana_electron_fhc_graphs.root", file_dir="fhc_pdg12", lepPdg=12, isFHC=True, saveGraphs=True)
+    # readRootDataFile(infile="./pdfs/ana_electron_rhc_graphs.root", file_dir="rhc_pdg12", lepPdg=12, isFHC=False)
+    readRootDataFile(infile="./pdfs/ana_aelectron_fhc_graphs.root", file_dir="fhc_pdg-12", lepPdg=-12, isFHC=True)
+    readRootDataFile(infile="./pdfs/ana_aelectron_rhc_graphs.root", file_dir="rhc_pdg-12", lepPdg=-12, isFHC=False)
+    readRootDataFile(infile="./pdfs/ana_muon_fhc_graphs.root", file_dir="fhc_pdg14", lepPdg=14, isFHC=True)
+    readRootDataFile(infile="./pdfs/ana_muon_rhc_graphs.root", file_dir="rhc_pdg14", lepPdg=14, isFHC=False)
+    readRootDataFile(infile="./pdfs/ana_amuon_fhc_graphs.root", file_dir="fhc_pdg-14", lepPdg=-14, isFHC=True)
+    readRootDataFile(infile="./pdfs/ana_amuon_rhc_graphs.root", file_dir="rhc_pdg-14", lepPdg=-14, isFHC=False)
+
+    neut_buff_tab = latextable.draw_latex(table_neut_buf_data, caption="APA Integral Data", label="tab:apa_sum")
+    saveTable(neut_buff_tab, table_neut_buf_file)
+    neut_df = pd.DataFrame(table_neut_buf_data)
+    neut_df.to_csv("./simulation-software/notebooks/neut_table_data.csv")
 
     # # vertex analysis
     # readRootDataFile(infile=".\\pdfs\\electron_nu_fhc_graphs.root", file_dir="fhc_pdg12", lepPdg=12, isFHC=True)
