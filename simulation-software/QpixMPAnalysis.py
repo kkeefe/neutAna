@@ -16,7 +16,7 @@ from scripts.neutMakeJson import main as MakeNeutJson
 
 MAXTIME = 10 # time to integrate for, or time radiogenic data is based on
 INPUT_FILE = "../jsons/1k_rtd_data_200-210.json"
-INPUT_DATA_FILE = "../data_rtd/total_eng_electron_nu_fhc_files.root"
+INPUT_DATA_FILE = "../data_rtd/single_electron_nu_fhc_files.root"
 SEED = 420
 
 INT_PRD = 0.5

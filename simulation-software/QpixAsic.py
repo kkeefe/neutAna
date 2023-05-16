@@ -1157,7 +1157,7 @@ class QPixAsic:
                 Connection receives a transaction that finished at time T
                 """
                 if self.rxBusy > T:
-                    print("WARNING receiving on busy connection")
+                    print(f"{self.asic}: WARNING receiving on busy connection")
                 else:
                     self.rxBusy = T
 

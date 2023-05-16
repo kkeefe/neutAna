@@ -415,6 +415,8 @@ class QpixAsicArray():
             self._nrows = nrows
             self._ncols = ncols
 
+        assert pctSpread <= 0.1 and pctSpread >= 0, "make sure that pctSpread makes sense.."
+
         # array parameters
         self._tickNow = 0
         self._timeNow = 0
