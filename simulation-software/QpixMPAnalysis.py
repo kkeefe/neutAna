@@ -22,7 +22,7 @@ SEED = 420
 INT_PRD = 0.5
 NHARDINT = 10
 
-def makeData(tile, r):
+def makeData(tile, r, frq, energy_dep, lep_recon, axis_x, axis_z, zpos):
     """
     Helper function which will extrct relevant data from a processed tile to a
     serialized, useful format to put onto the mp.queue
@@ -37,9 +37,15 @@ def makeData(tile, r):
 
     data = {
         "Architecture":"Pull" if tile.push_state else "Push",
-        "Route":str(tile.RouteState),
+        "Route":r,
+        "frq":frq,
         "Injected Hits":np.asarray(tile.InjectedHits, dtype=np.double),
         "Injected Size":int(tile.totalInjectedHits),
+        "energy_deposit":energy_dep,
+        "lep_recon":lep_recon,
+        "axis_x":axis_x,
+        "axis_z":axis_z,
+        "zpos":zpos,
 
         # asic data
         "AsicX":np.asarray([asic.col for asic in asics], dtype=np.short),
@@ -97,7 +103,7 @@ def MakeNeutFile(event_number, arrayXdim, arrayYdim):
 
     return output_file
 
-def pushTile(queue, r, neutFile, int_time=MAXTIME):
+def pushTile(queue, r, neutFile, frq, int_time=MAXTIME):
     """
     Push script to run. should be based on QpixTest format
     """
@@ -106,9 +112,14 @@ def pushTile(queue, r, neutFile, int_time=MAXTIME):
     np.random.seed(SEED)
 
     neutDF = getDF(neutFile)
-    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1, pctSpread=0.005)
+    energy_dep = neutDF["energy_deposit"]
+    lep_recon = neutDF["lep_recon"]
+    axis_x = neutDF["axis_x"]
+    axis_z = neutDF["axis_z"]
+    zpos = neutDF["zpos"]
+    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1, pctSpread=frq)
     if neutDF["size"] == 0:
-        queue.put(makeData(tile, r))
+        queue.put(makeData(tile, r, frq, energy_dep, lep_recon, axis_x, axis_z, zpos))
         return
 
     tile.SetSendRemote(enabled=True, transact=False)
@@ -122,7 +133,7 @@ def pushTile(queue, r, neutFile, int_time=MAXTIME):
     # don't try to simulate egregiously large events
     if tile.totalInjectedHits > 800 * int(tile._ncols * tile._nrows):
         print(f"skipping large sim event size: {tile.totalInjectedHits}")
-        queue.put(makeData(tile, r))
+        queue.put(tile, r, energy_dep, lep_recon, axis_x, axis_z, zpos)
         return
 
     dT, nInt = 0, 0
@@ -134,9 +145,9 @@ def pushTile(queue, r, neutFile, int_time=MAXTIME):
             tile.Interrogate(INT_PRD, hard=False)
         nInt += 1
 
-    queue.put(makeData(tile, r))
+    queue.put(makeData(tile, r, frq, energy_dep, lep_recon, axis_x, axis_z, zpos))
 
-def pullTile(queue, r, neutFile, int_time=MAXTIME):
+def pullTile(queue, r, neutFile, frq, int_time=MAXTIME):
     """
     basic function to run a tile with an integration period, over a specified time
 
@@ -147,9 +158,14 @@ def pullTile(queue, r, neutFile, int_time=MAXTIME):
     np.random.seed(SEED)
 
     neutDF = getDF(neutFile)
-    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1, pctSpread=0.005)
+    energy_dep = neutDF["energy_deposit"]
+    lep_recon = neutDF["lep_recon"]
+    axis_x = neutDF["axis_x"]
+    axis_z = neutDF["axis_z"]
+    zpos = neutDF["zpos"]
+    tile = qparray.QpixAsicArray(0, 0, tiledf=neutDF, deltaT=10e-6, debug=0, offset=5.1, pctSpread=frq)
     if neutDF["size"] == 0:
-        queue.put(makeData(tile, r))
+        queue.put(makeData(tile, r, frq, energy_dep, lep_recon, axis_x, axis_z, zpos))
         return
 
     # inject the radiogenic reference data
@@ -159,7 +175,7 @@ def pullTile(queue, r, neutFile, int_time=MAXTIME):
     # don't try to simulate egregiously large events
     if tile.totalInjectedHits > 800 * int(tile._ncols * tile._nrows):
         print(f"skipping large sim event size: {tile.totalInjectedHits}")
-        queue.put(makeData(tile, r))
+        queue.put(makeData(tile, r, frq, energy_dep, lep_recon, axis_x, axis_z, zpos))
         return
 
     # configure other meta cases of the tile
@@ -178,7 +194,7 @@ def pullTile(queue, r, neutFile, int_time=MAXTIME):
             tile.Interrogate(INT_PRD, hard=False)
         nInt += 1
 
-    queue.put(makeData(tile, r))
+    queue.put(makeData(tile, r, frq, energy_dep, lep_recon, axis_x, axis_z, zpos))
 
 def makeBranches():
     """
@@ -268,32 +284,27 @@ def main(seed=SEED):
     branches = makeBranches()
 
     # define the ranges of pull parameters to test
-    # routes = ["left", "snake", "trunk"]
-    # dims = [(4,4), (8,8), (10,14), (16,16)]
-    # event_number = [i for i in range(1,5000)]
-    routes = ["snake"]
-    dims = [(4,4)]
-    event_number = [i for i in range(1,5)]
+    frqs = [0.05, 0.005]
+    routes = ["left", "snake", "trunk"]
+    dims = [(4,4), (8,8), (10,14), (16,16)]
+    event_number = [i for i in range(1, 1000)]
     neutArgs = [(evt, xd, yd) for evt in event_number for xd, yd in dims]
     neutFiles = [ GetOutputJsonFile(f, x, y) for f, x, y in neutArgs ]
 
     # make the files on the pool
     msg = f"creating {len(neutArgs)} neutrino json files. continue?"
     print(msg)
-    pool = mp.Pool()
+    pool = mp.Pool(50)
     pool.starmap(MakeNeutFile, neutArgs)
 
     # place holder for the completed tiles
     tile_queue = mp.Queue()
 
     # create a list of all of the processes that need to run.
-    pull_args = [(r, f) for r in routes for f in neutFiles]
-    print("created json files:", neutArgs)
+    pull_args = [(r, f, frq) for r in routes for f in neutFiles for frq in frqs]
 
     # only test snake for push routing on 4x4 tiles
-    push_args = [("snake", f) for f in neutFiles if "x-4" in f] 
-    print(push_args)
-    input("found push args?")
+    push_args = [("snake", f, frq) for f in neutFiles if "x-4" in f or "x-8" in f for frq in frqs] 
 
     # pull architecture procs
     procs = [mp.Process(target=pullTile, args=(tile_queue, *arg)) for arg in pull_args]
@@ -301,7 +312,7 @@ def main(seed=SEED):
     # push archiecture procs
     procs.extend([mp.Process(target=pushTile, args=(tile_queue, *arg)) for arg in push_args])
     msg = f"making nprocs: {len(procs)}"
-    input(msg)
+    print(msg)
 
     nProcs = len(procs)
     msg = f"begginning processing of {nProcs} tiles."

@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import pandas as pd
 import ROOT
+from array import array
 
 channelXdim = 4
 channelYdim = 4
@@ -96,7 +97,7 @@ def makeDF(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim):
 
     return df
 
-def makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, outf):
+def makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, evt_e, lep_recon, axis_x, axis_z, zpos, outf):
     """
     args: filtered_pd_df - filtered RDataFrame
     """
@@ -106,6 +107,12 @@ def makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, outf):
     tiledf = {}
     tiledf["nrows"] = arrayXdim
     tiledf["ncols"] = arrayYdim
+    tiledf["energy_deposit"] = evt_e
+    tiledf["lep_recon"] = lep_recon
+    tiledf["axis_x"] = axis_x
+    tiledf["axis_z"] = axis_z
+    tiledf["zpos"] = zpos
+
     tiledf["hits"] = []
 
     # normalize asic numbers: this is for the simulation input which "0 numbers" the asic's within it's rows / cols
@@ -136,6 +143,13 @@ def setup_tree(input_file, event_number):
     pix_x = ROOT.std.vector('Int_t')()
     pix_y = ROOT.std.vector('Int_t')()
     pix_r = ROOT.std.vector('Double_t')()
+    evt_e = array('f', [ 0. ])
+    lep_e = array('f', [ 0. ])
+    hadtot_e = array('f', [ 0. ])
+    hadother_e = array('f', [ 0. ])
+    axis_x = array('f', [ 0. ])
+    axis_z = array('f', [ 0. ])
+    zpos = array('f', [ 0. ])
 
     tf = ROOT.TFile(input_file, "READ")
     if tf.IsZombie():
@@ -149,6 +163,14 @@ def setup_tree(input_file, event_number):
     t.SetBranchAddress('pixel_x', pix_x)
     t.SetBranchAddress('pixel_y', pix_y)
     t.SetBranchAddress('pixel_reset', pix_r)
+    t.SetBranchAddress('energy_deposit', evt_e)
+    t.SetBranchAddress('lepKE', lep_e)
+    t.SetBranchAddress('hadTot', hadtot_e)
+    t.SetBranchAddress('hadOther', hadother_e)
+    # position information
+    t.SetBranchAddress('zpos', zpos)
+    t.SetBranchAddress('axis_x', axis_x)
+    t.SetBranchAddress('axis_z', axis_z)
     if event_number > t.GetEntries():
         print("warning, not enough entries in tree:", event_number, " > ", t.GetEntries())
         sys.exit(-1)
@@ -157,7 +179,9 @@ def setup_tree(input_file, event_number):
     assert pix_x.size() == pix_y.size(), f"uneven pixel lengths: {pix_x.size()} != {pix_y.size()}"
     assert pix_x.size() == pix_r.size(), f"uneven data lengths: {pix_x.size()} != {pix_r.size()}"
 
-    return pix_x, pix_y, pix_r
+    lep_recon = lep_e[0] + hadtot_e[0] + hadother_e[0]
+
+    return pix_x, pix_y, pix_r, evt_e[0], lep_recon, axis_x[0], axis_z[0], zpos[0]
 
 def main(input_file, event_number, output_file, arrayXdim, arrayYdim):
     """
@@ -170,10 +194,10 @@ def main(input_file, event_number, output_file, arrayXdim, arrayYdim):
     """
 
     # get the stl vectors from the input ttree
-    pixel_x, pixel_y, pixel_reset = setup_tree(input_file, event_number)
+    pixel_x, pixel_y, pixel_reset, evt_e, lep_recon, axis_x, axis_z, zpos = setup_tree(input_file, event_number)
 
     # filter and create the flattened output json file to send to the python sim
-    hits = makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, output_file)
+    hits = makeJson(pixel_x, pixel_y, pixel_reset, arrayXdim, arrayYdim, evt_e, lep_recon, axis_x, axis_z, zpos, output_file)
 
     return hits
 
