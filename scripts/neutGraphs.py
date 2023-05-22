@@ -69,7 +69,7 @@ routeKeyColors = {"None":'red', 'trunk':'green', 'snake':'blue', 'left':'orange'
 routeColors = ['red', 'green', 'blue', 'orange']
 
 # path relative from scripts directory?
-OUTPUT_IMAGE_DIR = "./output_images"
+OUTPUT_IMAGE_DIR = "./output_images/"
 
 # scripts
 table_buffer_file = OUTPUT_IMAGE_DIR+"/buffer_data.tex"
@@ -113,8 +113,10 @@ class canvas_counter:
 
         if x_axis_title is not None:
             self._obj[-1].GetXaxis().SetTitle(x_axis_title)
+            self._obj[-1].GetXaxis().SetLabelSize(0.024)
         if y_axis_title is not None:
             self._obj[-1].GetYaxis().SetTitle(y_axis_title)
+            self._obj[-1].GetYaxis().SetLabelSize(0.024)
 
         self._canvas.Draw()
         if saveGraphs is not None:
@@ -264,11 +266,12 @@ def make_average_tmg(graphs, output_name, x_bins, title=None):
 
         graph_ind, data = zip(*sorted(zip(graph_bin, data)))
         unique_ind = np.array(np.unique(graph_ind), dtype=np.double)
-        mean_data = np.array([ np.mean([d for ind, d in zip(graph_ind, data) if ind == uid]) for uid in unique_ind], dtype=np.double)
+        data_ind = [[d for ind, d in zip(graph_ind, data) if ind == uid] for uid in unique_ind]
+        mean_data = np.array([ np.mean(data) for data in data_ind], dtype=np.double)
 
         # errors
         ex = np.array([0]*len(unique_ind), dtype=np.double)
-        std_data = np.array([np.std(d) for d in data], dtype=np.double)
+        # std_data = np.array([np.std(d) for d in data], dtype=np.double)
 
         new_graph = ROOT.TGraphErrors(len(unique_ind), unique_ind, mean_data, ex, 0)
         new_graph.Fit("pol1", "Q")
@@ -311,7 +314,7 @@ def makeGraphs(tf_dict, tdirs, zdirs, output_dir, graph_name, output_name, x_axi
         stack = make_stack_hist(asic_ints, output_name, x_axis_title, y_axis_title, title=title)
         if saveGraphs is not None:
             sg = saveGraphs+"_stack_integral"+f"_pdg{lepPdg}"+f"_{fhc}"
-        root_canvas.Add(stack, output_dir, x_axis_title, y_axis_title, saveGraphs=sg, legend_pos="tl")
+        root_canvas.Add(stack, output_dir, x_axis_title, y_axis_title, saveGraphs=sg, legend_pos="tr")
 
     # manage TGraphs
     if isinstance(asic_ints[0], ROOT.TGraph):
@@ -347,9 +350,8 @@ def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None, saveGraph
         sg = saveGraphs
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hTile",  "tile_cZpos", "Tile Resets", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile" if sg else None)
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hAsic",  "asic_cZpos", "FIFO Depth", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC" if sg else None, add_to_table=True)
-        # makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "hPixel", "pixel_cZpos",  "Pixel Resets", "Counts")
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKEAsic", "LepKE_AsicResets_cZpos",  "LepKE", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_lepKE" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKETile", "LepKE_TileResets_cZpos",  "LepKE", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_lepKE" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKEAsic", "LepKE_AsicResets_cZpos",  "Lepton KE (MeV)", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_lepKE" if sg else None)
+        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgLepKETile", "LepKE_TileResets_cZpos",  "Lepton KE (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_lepKE" if sg else None)
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cZpos",  "Energy Deposit (MeV)", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_ASIC_EnergyDep" if sg else None)
         makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cZpos",  "Energy Deposit (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Theta{theta_values[theta_dirs[i]]}_Tile_EnergyDep" if sg else None)
 
@@ -359,10 +361,10 @@ def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None, saveGraph
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hTile",  "tile_cTheta", "Tile Resets", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_Tile" if sg else None)
         makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hAsic",  "asic_cTheta", "FIFO Depth", "Counts", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC" if sg else None, add_to_table=True)
         # makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "hPixel", "pixel_cTheta",  "Pixel Resets", "Counts")
-        makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKEAsic", "LepKE_AsicResets_cTheta",  "LepKE", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
-        makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKETile", "LepKE_TileResets_cTheta",  "LepKE", "Max Tile Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cTheta",  "Energy Deposit (MeV)", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_EnergyDep" if sg else None)
-        makeGraphs(tf_dict, theta_dir, zpos_dirs, td, "tgEnergyDepTile", "EnergyDep_TileResets_cTheta",  "Energy Deposit (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_Tile_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKEAsic", "LepKE_AsicResets_cTheta",  "Lepton KE (MeV)", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_lepKE" if sg else None)
+        makeGraphs(tf_dict, theta_dirs, zpos_dir, zd, "tgLepKETile", "LepKE_TileResets_cTheta",  "Lepton KE (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_Tile_lepKE" if sg else None)
+        makeGraphs(tf_dict, theta_dirs, zpos_dir, td, "tgEnergyDepAsic", "EnergyDep_AsicResets_cTheta",  "Energy Deposit (MeV)", "Max FIFO Depth", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_ASIC_EnergyDep" if sg else None)
+        makeGraphs(tf_dict, theta_dirs, zpos_dir, td, "tgEnergyDepTile", "EnergyDep_TileResets_cTheta",  "Energy Deposit (MeV)", "Max APA Resets", lepPdg, isFHC, saveGraphs=f"Const_Z{zpos_values[zpos_dirs[i]]}_Tile_EnergyDep" if sg else None)
 
     tf.Close()
 
@@ -372,11 +374,11 @@ def readRootDataFile(infile, file_dir="test", lepPdg=None, isFHC=None, saveGraph
 ###############################################################################
 
 
-def makePullGraphs(df):
+def makePullGraphs(df, size, output_name, input_file):
     df['size'] = df['AsicX'].map(len)
     sizes = pd.unique(df['size'])
     df = df[df['size'] == size]
-    routes = ["snake", "left", "trunk"]
+    routes = ["left", "snake", "trunk"]
     df["Remote Transaction Average"] = df['Remote Transactions'].map(np.mean)
 
     remote_trans_avg = [0 for i in range(len(routes)+1)]
@@ -391,7 +393,10 @@ def makePullGraphs(df):
         stack_data.append(route_df["Remote Transaction Average"])
         max_local_stack.append(route_df["Max Local"])
         max_remote_stack.append(route_df["Max Remote"])
-        print(f'{route} has counts: {len(route_df["Max Local"])}')
+        counts = len(route_df["Max Local"])
+        print(f'{route} has counts: {counts}')
+        if counts == 0:
+            continue
 
         # find the 90% and 99% intervals here
         remote_data = sorted(route_df["Max Remote"])
@@ -418,7 +423,7 @@ def makePullGraphs(df):
     ax.set_xlabel("Local Buffer Depth")
     ax.set_ylabel("CDF of entries")
     plt.tight_layout()
-    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_local_stack.pdf")
+    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_local_stack.png")
 
     # scatter plot fits
     fig, ax = plt.subplots(figsize=(5, 5))
@@ -433,7 +438,7 @@ def makePullGraphs(df):
     ax.set_xlabel("Local Buffer Depth")
     ax.set_ylabel("Remote Buffer Depth")
     plt.tight_layout()
-    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_route_fits.pdf")
+    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_route_fits.png")
     plt.close(fig)
 
     # save remote data
@@ -441,12 +446,12 @@ def makePullGraphs(df):
     max_labels = [*routes, "local"]
     max_labels = [ f"{r} - {c}" for r, c in zip(max_labels, conf99_intervals)]
     max_remote_stack.append(max_local_stack[0])
-    ax.hist(max_remote_stack, bins=100, histtype='step', stacked=False, fill=False, range=(0, 2000), density=False, cumulative=True, label=max_labels)
+    ax.hist(max_remote_stack, bins=100, histtype='step', stacked=False, fill=False, range=(0, 1700), density=False, cumulative=True, label=max_labels)
     ax.set_xlabel("Buffer Depth")
     ax.set_ylabel("CDF of entries")
     ax.legend(loc="lower right")
     plt.tight_layout()
-    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_remote_stack.pdf")
+    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_remote_stack.png")
     plt.close(fig)
 
     # save remote transaction average data
@@ -459,7 +464,7 @@ def makePullGraphs(df):
     ax.set_xlabel("Remote Transaction Average")
     ax.legend(loc="upper right")
     plt.tight_layout()
-    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_remote_transactions.pdf")
+    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_remote_transactions.png")
     plt.close(fig)
 
     frq = "0.5\%" if "low" in input_file.lower() else "5\%"
@@ -471,11 +476,106 @@ def makePullGraphs(df):
     table_digi_buf_data.append(buf_data)
     table_fit_trans_data.append(fit_data)
 
-def makePushGraphs(df):
+def makePushGraphs(df, size, output_name, input_file):
     """
     Make the equivalent graphs for the push architecture
+
+    which is currently only the snake graph of the pull version
     """
-    pass
+    df['size'] = df['AsicX'].map(len)
+    sizes = pd.unique(df['size'])
+    df = df[df['size'] == size]
+    routes = ["snake"]
+    df["Remote Transaction Average"] = df['Remote Transactions'].map(np.mean)
+
+    remote_trans_avg = [0 for i in range(len(routes)+1)]
+    conf95_intervals = [0 for i in range(len(routes)+1)]
+    conf99_intervals = [0 for i in range(len(routes)+1)]
+    maxSize = 0
+    max_local_stack, max_remote_stack, stack_data = [], [], []
+    for i, route in enumerate(routes):
+
+        if route != "snake":
+            continue
+
+        # add data to stacks
+        route_df = df[df["Route"] == route]
+        stack_data.append(route_df["Remote Transaction Average"])
+        max_local_stack.append(route_df["Max Local"])
+        max_remote_stack.append(route_df["Max Remote"])
+        counts = len(route_df["Max Local"])
+        print(f'{route} has counts: {counts}')
+        if counts == 0:
+            continue
+
+        # find the 90% and 99% intervals here
+        remote_data = sorted(route_df["Max Remote"])
+        len_1p = int(0.01 * (len(remote_data)))
+        len_10p = int(0.10 * (len(remote_data)))
+        len_5p = int(0.05 * (len(remote_data)))
+        maxSize = len(remote_data) if len(remote_data) > maxSize else maxSize
+        conf99_intervals[i] = remote_data[-len_1p+1]
+        conf95_intervals[i] = remote_data[-len_5p+1]
+
+        local_data = sorted(route_df["Max Local"])
+        len_1p = int(0.01 * (len(local_data)))
+        len_10p = int(0.10 * (len(local_data)))
+        len_5p = int(0.05 * (len(local_data)))
+        maxSize = len(local_data) if len(local_data) > maxSize else maxSize
+        conf99_intervals[-1] = local_data[-len_1p+1]
+        
+        remote_trans_avg[i] = np.mean(route_df["Remote Transaction Average"])
+        remote_trans_avg[-1] = np.mean(route_df["Injected Size"])
+
+    # save local data
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax.hist(max_local_stack, bins=int(np.sqrt(maxSize)),  histtype='step', stacked=False, fill=False, range=(0, maxSize), density=False, cumulative=True)
+    ax.set_xlabel("Local Buffer Depth")
+    ax.set_ylabel("CDF of entries")
+    plt.tight_layout()
+    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_local_stack.png")
+
+    # scatter plot fits
+    fig, ax = plt.subplots(figsize=(5, 5))
+    fits = [0 for i in range(len(routes)+1)]
+    for i, (maxL, maxR) in enumerate(zip(max_local_stack, max_remote_stack)):
+        b, a = np.polyfit(maxL, maxR, deg=1)
+        x = np.linspace(1, max(maxL), num=50)
+        fits[i] = b
+        ax.plot(x, b*x+a, c=routeColors[i], rasterized=True)
+        ax.scatter(x=maxL, y=maxR, c=routeColors[i], label=f"{routes[i]} - {b:0.2f}", rasterized=True)
+    ax.legend(loc="upper left")
+    ax.set_xlabel("Local Buffer Depth")
+    ax.set_ylabel("Remote Buffer Depth")
+    plt.tight_layout()
+    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_push_route_fits.png")
+    plt.close(fig)
+
+    # save remote data
+    fig, ax = plt.subplots(figsize=(5, 5))
+    max_labels = [*routes, "local"]
+    max_labels = [ f"{r} - {c}" for r, c in zip(max_labels, conf99_intervals)]
+    max_remote_stack.append(max_local_stack[0])
+    ax.hist(max_remote_stack, bins=100, histtype='step', stacked=False, fill=False, range=(0, 1700), density=False, cumulative=True, label=max_labels)
+    ax.set_xlabel("Buffer Depth")
+    ax.set_ylabel("CDF of entries")
+    ax.legend(loc="lower right")
+    plt.tight_layout()
+    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_push_remote_stack.png")
+    plt.close(fig)
+
+    # save remote transaction average data
+    rng = (1, 3001)
+    nbins = 200
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax.set_xlabel("Average number of remote transactions")
+    ax.hist(stack_data, bins=nbins, range=rng, histtype='bar', stacked=True, log=False, label=routes)
+    ax.set_ylabel(f"{(rng[1]-rng[0])/nbins:.2f} events / remote trans avg.")
+    ax.set_xlabel("Remote Transaction Average")
+    ax.legend(loc="upper right")
+    plt.tight_layout()
+    fig.savefig(OUTPUT_IMAGE_DIR+f"/{output_name}_push_remote_transactions.png")
+    plt.close(fig)
 
 def readFeatherDataFile(output_name, input_file="./scripts/neutMP60k.feather", size=16):
     """
@@ -486,11 +586,13 @@ def readFeatherDataFile(output_name, input_file="./scripts/neutMP60k.feather", s
     df = pd.read_feather(input_file)
     architectures = pd.unique(df["Architecture"])
 
-    pull_df = df[(df["Route"] != "None") and (df["Architecture"] == "Pull")]
-    makePullGraphs(pull_df)
+    pull_df = df[(df["Route"] != "None") & (df["Architecture"] == "Push")]
+    makePullGraphs(pull_df, size, output_name, input_file)
 
-    push_df = df[(df["Route"] != "None") and (df["Architecture"] == "Push")]
-    makePushGraphs(push_df)
+    if size > 64:
+        return
+    push_df = df[(df["Route"] != "None") & (df["Architecture"] == "Pull")]
+    makePushGraphs(push_df, size, output_name, input_file)
 
 
 def main():
@@ -498,17 +600,16 @@ def main():
     # # full tile analysis
     readRootDataFile(infile="./pdfs/ana_electron_fhc_graphs.root", file_dir="fhc_pdg12", lepPdg=12, isFHC=True, saveGraphs=True)
     # readRootDataFile(infile="./pdfs/ana_electron_rhc_graphs.root", file_dir="rhc_pdg12", lepPdg=12, isFHC=False)
-    readRootDataFile(infile="./pdfs/ana_aelectron_fhc_graphs.root", file_dir="fhc_pdg-12", lepPdg=-12, isFHC=True)
-    readRootDataFile(infile="./pdfs/ana_aelectron_rhc_graphs.root", file_dir="rhc_pdg-12", lepPdg=-12, isFHC=False)
-    readRootDataFile(infile="./pdfs/ana_muon_fhc_graphs.root", file_dir="fhc_pdg14", lepPdg=14, isFHC=True)
-    readRootDataFile(infile="./pdfs/ana_muon_rhc_graphs.root", file_dir="rhc_pdg14", lepPdg=14, isFHC=False)
-    readRootDataFile(infile="./pdfs/ana_amuon_fhc_graphs.root", file_dir="fhc_pdg-14", lepPdg=-14, isFHC=True)
-    readRootDataFile(infile="./pdfs/ana_amuon_rhc_graphs.root", file_dir="rhc_pdg-14", lepPdg=-14, isFHC=False)
-
-    neut_buff_tab = latextable.draw_latex(table_neut_buf_data, caption="APA Integral Data", label="tab:apa_sum")
-    saveTable(neut_buff_tab, table_neut_buf_file)
-    neut_df = pd.DataFrame(table_neut_buf_data)
-    neut_df.to_csv("./simulation-software/notebooks/neut_table_data.csv")
+    # readRootDataFile(infile="./pdfs/ana_aelectron_fhc_graphs.root", file_dir="fhc_pdg-12", lepPdg=-12, isFHC=True)
+    # readRootDataFile(infile="./pdfs/ana_aelectron_rhc_graphs.root", file_dir="rhc_pdg-12", lepPdg=-12, isFHC=False)
+    # readRootDataFile(infile="./pdfs/ana_muon_fhc_graphs.root", file_dir="fhc_pdg14", lepPdg=14, isFHC=True)
+    # readRootDataFile(infile="./pdfs/ana_muon_rhc_graphs.root", file_dir="rhc_pdg14", lepPdg=14, isFHC=False)
+    # readRootDataFile(infile="./pdfs/ana_amuon_fhc_graphs.root", file_dir="fhc_pdg-14", lepPdg=-14, isFHC=True)
+    # readRootDataFile(infile="./pdfs/ana_amuon_rhc_graphs.root", file_dir="rhc_pdg-14", lepPdg=-14, isFHC=False)
+    # neut_buff_tab = latextable.draw_latex(table_neut_buf_data, caption="APA Integral Data", label="tab:apa_sum")
+    # saveTable(neut_buff_tab, table_neut_buf_file)
+    # neut_df = pd.DataFrame(table_neut_buf_data)
+    # neut_df.to_csv("./simulation-software/notebooks/neut_table_data.csv")
 
     # # vertex analysis
     # readRootDataFile(infile=".\\pdfs\\electron_nu_fhc_graphs.root", file_dir="fhc_pdg12", lepPdg=12, isFHC=True)
@@ -520,6 +621,10 @@ def main():
     # readRootDataFile(infile=".\\pdfs\\muon_nu_rhc_graphs.root", file_dir="rhc_pdg14")
     # readRootDataFile(infile=".\\pdfs\\amuon_nu_rhc_graphs.root", file_dir="rhc_pdg-14")
 
+    # readFeatherDataFile("mpPush_16_slow", input_file="./scripts/neutMPpush_lowFrq.feather", size=16)
+    # readFeatherDataFile("mpPush_64_slow", input_file="./scripts/neutMPpush_lowFrq.feather", size=64)
+    # readFeatherDataFile("mpPush_140_slow", input_file="./scripts/neutMPpush_lowFrq.feather", size=140)
+    # readFeatherDataFile("mpPush_256_slow", input_file="./scripts/neutMPpush_lowFrq.feather", size=256)
     # readFeatherDataFile("mp60_16_fast", input_file="./scripts/neutMP60k.feather", size=16)
     # readFeatherDataFile("mp60_16_slow", input_file="./scripts/neutMP60k_lowFrq.feather", size=16)
     # readFeatherDataFile("mp60_64_fast", input_file="./scripts/neutMP60k.feather", size=64)
