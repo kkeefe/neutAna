@@ -244,18 +244,18 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     tgLepKETile.Write();
 
     TGraph tgEnergyDepAsic = *f.Graph("energy_deposit", "max_asic_reset");
-    tgLepKEAsic.Sort();
-    tgLepKEAsic.Draw();
-    tgLepKEAsic.SetName("tgEnergyDepAsic");
-    tgLepKEAsic.SetTitle("tgEnergyDepAsic");
-    tgLepKEAsic.Write();
+    tgEnergyDepAsic.Sort();
+    tgEnergyDepAsic.Draw();
+    tgEnergyDepAsic.SetName("tgEnergyDepAsic");
+    tgEnergyDepAsic.SetTitle("tgEnergyDepAsic");
+    tgEnergyDepAsic.Write();
 
     TGraph tgEnergyDepTile = *f.Graph("energy_deposit", "tile_size");
-    tgLepKETile.Sort();
-    tgLepKETile.Draw();
-    tgLepKETile.SetName("tgEnergyDepTile");
-    tgLepKETile.SetTitle("tgEnergyDepTile");
-    tgLepKETile.Write();
+    tgEnergyDepTile.Sort();
+    tgEnergyDepTile.Draw();
+    tgEnergyDepTile.SetName("tgEnergyDepTile");
+    tgEnergyDepTile.SetTitle("tgEnergyDepTile");
+    tgEnergyDepTile.Write();
 
     TGraph tgnFSAsic = *f.Graph("nFS", "max_asic_reset");
     tgnFSAsic.Sort();
