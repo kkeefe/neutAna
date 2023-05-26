@@ -5,6 +5,7 @@
 #include "TH2.h"
 
 #include <algorithm>
+#include "leptonWeights.hpp"
 
 #define TILE_WIDTH 64;
 // const int YMIN = 800 - TILE_WIDTH;
@@ -124,44 +125,32 @@ std::vector<double> max_pixel_rtds(const std::vector<double>& p_resets,
     return max_rtds;
 }
 
-// define the ASIC weight based on the energy deposit or the 
-double make_weight(const double& energy_range)
+// define the ASIC weight with data ripped from the DUNE-TDRv2
+float make_weight(float energy_range, int lep_pdg)
 {
-    double weight;
-    // values read off of the TDR
-    // ve apperance
-    // 14.8, // 500
-    // 25,   // 750
-    // 26,   // 1G
-    // 35,   // 1.25G
-    // 57,   // 1.5G
-    // 89,   // 1.75
-    // 110,  // 2
-    // 130,  // 2.25
-    // 135,  // 2.5
-    // 133,  // 2.75
-    // 123,  // 3
-    // 111,  // 3.25
-    // 92,  // 3.5
-    // 73,  // 3.75
-    // 58,  // 4
-    // 42,  // 4.25
-    // 30,  // 4.5
-    // 22,  // 4.75
-    // 17,  // 5
-    // 15,  // 5.25
-    // 12, // 5.5
-    // 10.5, // 5.75
-    // 10, // 6
-    // 7.5, // 6.25
-    // 7.25, // 6.5
-    // 6.5, // 6.75
-    // 6.4 // 7
-    // 6.0, // 7.25
-    // 6.0, // 7.5
-    // 6.0, // 7.75
-    // otherwise 0 for neutrino oscillation
+    float weight;
 
+    switch (lep_pdg)
+    {
+    case 12:
+        weight = electron_weights(energy_range);
+        break;
+    case -12:
+        weight = aelectron_weights(energy_range);
+        break;
+
+    case 14:
+        weight = muon_weights(energy_range);
+        break;
+
+    case -14:
+        weight = amuon_weights(energy_range);
+        break;
+    
+    default:
+        weight = 0;
+        break;
+    }
 
     return weight;
 }
@@ -214,6 +203,10 @@ void makeGraphs(filtered_rdf& rdf, const std::string& cut, TDirectory* td)
     auto thAsic = f.Histo1D({"hAsic", "hAsic", 512, 0, 2048}, "max_asic_reset");
     thAsic->Draw();
     thAsic->Write();
+
+    auto thAsicWeight = f.Histo1D({"hAsicWeight", "hAsicWeight", 512, 0, 2048}, "max_asic_reset", "asic_weight");
+    thAsicWeight->Draw();
+    thAsicWeight->Write();
 
     // TGraph tgPixel = *f.Graph("tile_size", "max_pixel_reset");
     // tgPixel.Sort();
